@@ -1,15 +1,27 @@
-# TravelNest (v2.4.0)
+# Veya (v2.6.0)
 
 **A Private, Local-First Personal Travel Sanctuary & Planning Workspace**
 
-TravelNest is a mobile-first, zero-cloud travel organization application designed for travelers who value complete data sovereignty, tactile editorial aesthetics, and offline reliability. Built with React 19, TypeScript, Dexie.js (IndexedDB v6), Capacitor, and Tailwind CSS under the Apple iOS Cupertino / Monochrome Voyage design system.
+Veya is a mobile-first, zero-cloud travel organization application designed for travelers who value complete data sovereignty, tactile editorial aesthetics, and offline reliability. Built with React 19, TypeScript, Dexie.js (IndexedDB v7), Capacitor, and Tailwind CSS under the Apple iOS Cupertino / Monochrome Voyage design system.
+
+---
+
+## What's New in v2.6.0: Travel Companion Suite & Rebranding to Veya
+
+* **Rebranding to Veya:** Complete identity transformation across Web PWA, Android native, and iOS runtimes, including responsive touch typography, Apple mobile web app configuration, and native manifests.
+* **Daily Companion Cockpit:** Real-time trip dashboard featuring next-activity countdown timers, active transit monitoring, nearest saved place bearings, daily budget progress tracking, and 1-tap quick actions.
+* **Multi-Leg Transit & GTFS/Official Timetable Import:** Manual multi-leg route builder (walk, train, flight, metro, bus, ferry) and offline-capable parser for GTFS static and official timetable CSV/JSON feeds.
+* **Reusable Recipe & Meal Planning Library:** Global reusable recipe database, trip-specific ingredient price overrides, automated meal cost estimation, and 1-tap grocery list to expense ledger logging.
+* **Offline Saved Places & Bearing Directions:** GPS coordinate persistence, offline distance and directional bearing calculation, and instant deep-linking to Apple Maps, Google Maps, and OpenStreetMap.
+* **Selected-Record Pack Exchange:** Safe `.veya.pack.json` selective export and import with 3-way conflict resolution (overwrite, duplicate, or skip) and 100% backward compatibility with legacy `.travelnest.pack.json` files.
+* **Dexie Schema v7 Non-Cascading Invariant:** Schema upgrade safely preserving global recipes and base ingredient pricing across trip deletions.
 
 ---
 
 ## What's New in v2.4.0: Alert & Dialog Component Library (Monochrome Voyage)
 
-* **Elimination of Built-in System Alert Boxes:** Replaced all native Android and browser dialogs (`window.confirm()`, `window.alert()`) with custom, in-app modal dialogs that preserve TravelNest's tactile notebook aesthetic.
-* **Master Component Anatomy (`DialogFrame` & `ConfirmDialog`):** Modeled on the Monochrome Voyage v2.4 Sketch library. Features backdrop scrim (`rgba(0,0,0,0.45)` with `backdrop-filter: blur(4px)`), continuous `rounded-3xl` (24px) container radius, category kicker (`label-micro`), title headline, body text, optional warning callout banner, detail card enclosure, and pill-shaped action buttons.
+* **Elimination of Built-in System Alert Boxes:** Replaced all native Android and browser dialogs (`window.confirm()`, `window.alert()`) with custom, in-app modal dialogs that preserve Veya's tactile notebook aesthetic.
+* **Master Component Anatomy (`DialogFrame` & `ConfirmDialog`):** Modeled on the Monochrome Voyage Sketch library. Features backdrop scrim (`rgba(0,0,0,0.45)` with `backdrop-filter: blur(4px)`), continuous `rounded-3xl` (24px) container radius, category kicker (`label-micro`), title headline, body text, optional warning callout banner, detail card enclosure, and pill-shaped action buttons.
 * **3-Tier Action Hierarchy:**
   * **Solid Black Primary (`#0B0C0E`):** Default confirmation action with crisp white text.
   * **Outlined Secondary:** 1px stroke border for non-destructive dismissal (`Keep Trip`, `Adjust Later`, `Cancel`).
@@ -28,18 +40,17 @@ TravelNest is a mobile-first, zero-cloud travel organization application designe
 * **Safe Trip Deletion & Non-Destructive Detachment:** Overhauled `deleteTripCascade` so deleting a trip never erases saved collection items or journal memories. Saved places/items are detached (`tripId: undefined`, `status: 'inbox'`), assigned to their destination country dossier in `db.countries`, and preserved with all photos, notes, tags, and links intact. Journal memories are unlinked (`tripId: undefined`), preserving their full narrative, date, tags, photos, and location context. All other trip-specific records (itinerary events, bookings, expenses, checklists, documents) are cleanly deleted within an atomic Dexie transaction without leaving orphaned references.
 * **Dexie Schema v6 Migration:** Upgraded Dexie database schema to version 6, introducing secondary `isSample` indexes across 9 entity stores and an automatic transactional `.upgrade()` hook to safely tag existing legacy dummy records.
 * **App Reset Separation:** "App Reset" remains an independent, distinct operation in Settings with its own 3-tier scope modal (`ResetAppModal`).
-* **Expanded Automated Regression Suite (134 Assertions):** Expanded automated test suite with `dummyRemovalAndTripDelete.test.ts` (60 assertions), bringing the total to 134 passing assertions across 3 comprehensive test suites.
 
 ---
 
 ## What's New in v2.3.0: Safe Android Updates & Permanent Local Data Preservation
 
 * **Permanent In-Place Update Preservation:** Enforces a zero-data-loss guarantee for updating installed Android APKs. User trips, places, country dossiers, itineraries, bookings, financial records/debts, packing checklists, vault documents, memories/photos, and traveler profile preferences survive updates intact.
-* **Stable Android Application Identity:** Permanently locked Android Application ID (`com.travelnest.app`) and Capacitor WebView scheme (`server.androidScheme: 'https'`). Origin lock to `https://localhost` ensures Chromium WebView IndexedDB storage directory is never partitioned or disconnected across builds.
-* **Sequential Versioning & Signing Continuity:** Android `versionCode` sequentially incremented to `2` and `versionName` updated to `"2.3.0"`. Documented strict signing certificate continuity rules to prevent Android Package Manager `INSTALL_FAILED_UPDATE_INCOMPATIBLE` rejections.
-* **Non-Destructive Schema Migrations:** Formalized Dexie.js versioning principles with transactional `.upgrade()` hooks for Version 2 (safe `country`/`category` defaults) and Version 5 (safe `date`, `isFavorite`, `tags`, `photos` defaults).
+* **Stable Android Application Identity:** Locked Android Application ID (`com.travelnest.app`) and Capacitor WebView scheme (`server.androidScheme: 'https'`). Origin lock to `https://localhost` ensures Chromium WebView IndexedDB storage directory is never partitioned or disconnected across builds.
+* **Sequential Versioning & Signing Continuity:** Android `versionCode` sequentially incremented to `3` and `versionName` updated to `"2.6.0"`. Keystore certificate continuity maintained to prevent Android Package Manager `INSTALL_FAILED_UPDATE_INCOMPATIBLE` rejections.
+* **Non-Destructive Schema Migrations:** Formalized Dexie.js versioning principles with transactional `.upgrade()` hooks for Version 2 (safe `country`/`category` defaults), Version 5 (safe `date`, `isFavorite`, `tags`, `photos` defaults), and Version 7 (safe recipe, transit, and offline place defaults).
 * **Safe Startup Handshake (`initializeDatabaseSafely`):** Defensive database initialization that traps quota or storage access errors without silent wiping, exposing a non-destructive recovery UI with emergency JSON data export.
-* **Backup Architecture v4 with Traveler Profile:** Extended `.travelnest.json` export to encapsulate the complete system state including `userProfile` (display name, avatar, home country, currency, travel style chips) and all 11 tables, with backward-compatible v3 restore.
+* **Backup Architecture with Traveler Profile:** Support for `.veya.json` exports (with backward-compatible support for `.travelnest.json`) to encapsulate the complete system state including `userProfile` (display name, avatar, home country, currency, travel style chips) and all tables.
 * **Update Safety Advisory in Settings:** Cupertino callout banner reminding travelers to export an offline backup prior to major native updates.
 
 ---
@@ -47,7 +58,7 @@ TravelNest is a mobile-first, zero-cloud travel organization application designe
 ## Technical Architecture
 
 * **Framework:** React 19 + TypeScript + Vite
-* **Persistence:** Dexie.js (IndexedDB schema v6) for relational entities + HTML5 `localStorage` for profile & fast-path flags.
+* **Persistence:** Dexie.js (IndexedDB schema v7) for relational entities + HTML5 `localStorage` for profile & fast-path flags.
 * **Native Runtime:** Capacitor 8 (`@capacitor/ios`, `@capacitor/android`, `@capacitor/app`, `@capacitor/status-bar`)
 * **Styling:** Tailwind CSS 4 with custom Cupertino / Monochrome Voyage design system.
 * **Offline Privacy:** 100% local-first. Zero telemetry, zero external database backends, zero tracker scripts.
@@ -60,7 +71,7 @@ TravelNest is a mobile-first, zero-cloud travel organization application designe
 | :--- | :--- | :--- |
 | **Development** | `npm run dev` | Starts Vite local development server on `http://localhost:5173/`. |
 | **Production Build** | `npm run build` | Runs TypeScript compilation (`tsc -b`) and Vite production bundle. |
-| **Automated Tests** | `npm test` | Runs the 134 automated test assertions across 3 suites (`dummyRemovalAndTripDelete`, `safeUpdateAndMigration`, `onboardingAndData`). |
+| **Automated Tests** | `npm test` | Runs the 320+ automated test assertions across 7 test suites. |
 | **Linting** | `npm run lint` | Runs `oxlint` across all project files. |
 | **iOS Sync** | `npm run cap:build:ios` | Builds production web bundle and syncs assets to `ios/` native Xcode project. |
 | **Xcode Open** | `npm run cap:open:ios` | Opens the native iOS project in Xcode (`ios/App/App.xcodeproj`). |
@@ -74,4 +85,3 @@ TravelNest is a mobile-first, zero-cloud travel organization application designe
 ## Release Safety & PRD
 
 For full product requirements, entity relationship diagrams (ERD), architecture specifications, edge case registers, and the permanent **Release Safety: Backward Compatibility & Local Data Preservation Mandate**, see [`PRD.md`](./PRD.md).
-
