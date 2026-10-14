@@ -1,0 +1,1266 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import 'tailwindcss';
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Monochrome Voyage Design System Tokens
+   Strictly following design-system/travelnest/DESIGN.md
+   ========================================================================== */
+
+:root {
+  /* Colors from DESIGN.md */
+  --surface: #f9f9f8;
+  --surface-dim: #dadad9;
+  --surface-bright: #f9f9f8;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f3f4f3;
+  --surface-container: #eeeeed;
+  --surface-container-high: #e8e8e7;
+  --surface-container-highest: #e2e2e2;
+  --on-surface: #1a1c1c;
+  --on-surface-variant: #444748;
+  --inverse-surface: #2f3130;
+  --inverse-on-surface: #f1f1f0;
+  --outline: #747878;
+  --outline-variant: #c4c7c7;
+  --surface-tint: #5f5e5e;
+
+  /* Ink Blacks & Charcoal Primaries */
+  --primary: #111111;
+  --primary-pure: #000000;
+  --primary-foreground: #ffffff;
+  --primary-container: #1c1b1b;
+  --on-primary-container: #858383;
+  --inverse-primary: #c8c6c5;
+
+  /* Neutral Carbons & Secondaries */
+  --secondary: #6b6b6b;
+  --secondary-dim: #5e5e5e;
+  --secondary-foreground: #ffffff;
+  --secondary-container: #e1dfdf;
+  --on-secondary-container: #626262;
+
+  --tertiary: #000000;
+  --on-tertiary: #ffffff;
+
+  /* Strokes and Rule Lines */
+  --stroke: #e3e2de;
+  --stroke-pressed: #d4d4d1;
+  --border: #e3e2de;
+  --border-subtle: #eeeeed;
+
+  /* Errors */
+  --error: #ba1a1a;
+  --destructive: #ba1a1a;
+  --destructive-foreground: #ffffff;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
+
+  /* Neutral Canvas & Surfaces */
+  --background: #f9f9f8;
+  --foreground: #1a1c1c;
+  --on-background: #1a1c1c;
+  --surface-variant: #e2e2e2;
+
+  --surface-neutral-1: #f7f7f6; /* Standard container cards & modules */
+  --surface-neutral-2: #f1f1ef; /* Nested cards, tracks, hover fills */
+  --surface-neutral-3: #eaeaea; /* Muted chips, secondary segmented backdrops */
+  --card: #ffffff;
+  --card-foreground: #1a1c1c;
+  --popover: #ffffff;
+  --popover-foreground: #1a1c1c;
+  --muted: #f1f1ef;
+  --muted-foreground: #6b6b6b;
+  --accent: #f1f1ef;
+  --accent-foreground: #111111;
+  --input: #e3e2de;
+  --ring: #111111;
+
+  /* Typography: Inter */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Rounded Scales from DESIGN.md */
+  --radius-sm: 0.5rem;   /* 8px */
+  --radius: 1rem;        /* 16px */
+  --radius-md: 1.5rem;   /* 24px */
+  --radius-lg: 2rem;     /* 32px */
+  --radius-xl: 3rem;     /* 48px */
+  --radius-full: 9999px; /* Continuous pill */
+
+  /* Spacing Tokens from DESIGN.md */
+  --gutter: 1rem;        /* 16px */
+  --margin: 1.25rem;     /* 20px */
+  --space-xs: 0.25rem;   /* 4px */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 0.75rem;   /* 12px */
+  --space-lg: 1.25rem;   /* 20px */
+  --space-xl: 1.75rem;   /* 28px */
+
+  /* Elevation & Depths (Ghost Outlines & Micro-Ambient Floats) */
+  --shadow-ambient: 0 8px 24px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  --shadow-float: 0 12px 32px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+  --shadow-fab: 0 10px 25px rgba(0, 0, 0, 0.25), 0 3px 8px rgba(0, 0, 0, 0.15);
+
+  --tab-bar-height: 52px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --font-body: var(--font-body);
+  --font-heading: var(--font-heading);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-full: var(--radius-full);
+}
+
+/* ==========================================================================
+   Base Layout & Document Setup
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overscroll-behavior-x: none;
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+  font-family: var(--font-body);
+  background-color: #eeeeed; /* Minimalist analog desk backdrop */
+  color: var(--on-surface);
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: var(--on-surface);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   Mobile Chassis & Native Responsive Envelope
+   ========================================================================== */
+
+#root {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.app-container,
+.iphone-frame {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: #ffffff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* On desktop browser windows, center gracefully with a clean minimalist container */
+@media (min-width: 769px) {
+  .app-container,
+  .iphone-frame {
+    max-width: 460px;
+    height: 94vh;
+    min-height: 780px;
+    max-height: 940px;
+    border-radius: 20px;
+    border: 1px solid var(--stroke);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08);
+    margin: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    background-color: #ffffff;
+  }
+  
+  .app-container,
+  .iphone-frame {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    min-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* Top App Bar Safe Area Spacer (adapts dynamically to Android status/notification bar) */
+.app-top-spacer,
+.ios-top-spacer {
+  position: relative;
+  width: 100%;
+  height: env(safe-area-inset-top, 0px);
+  min-height: 0px;
+  background-color: #ffffff;
+  z-index: 40;
+  flex-shrink: 0;
+}
+
+/* Fast-Tap & Touch Optimization for Mobile Native Performance */
+html,
+body,
+button,
+a,
+[role="button"],
+.btn,
+.btn-icon,
+.filter-chip,
+.choice-chip,
+.chip,
+.cupertino-row,
+.cupertino-tab-item,
+.travelnest-card,
+.settings-interactive-row,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"],
+.btn,
+.btn-icon,
+.filter-chip,
+.cupertino-row,
+.cupertino-tab-item {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Prevent iOS Safari & Chrome from auto-zooming on input focus */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea,
+  .input,
+  .select,
+  .textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Scroll View Container: padded to avoid Android gesture navigation bar and bottom tab bar */
+.cupertino-scroll-view,
+.travelnest-scroll-view {
+  flex: 1;
+  padding-top: 14px;
+  padding-left: max(var(--margin), env(safe-area-inset-left, 0px));
+  padding-right: max(var(--margin), env(safe-area-inset-right, 0px));
+  padding-bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + 36px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  background-color: #ffffff;
+  transform: translateZ(0);
+}
+
+/* ==========================================================================
+   Monochrome Voyage Cards & Modular Containers
+   ========================================================================== */
+
+.cupertino-card,
+.card,
+.travelnest-card {
+  background-color: var(--surface-neutral-1); /* #F7F7F6 */
+  border: 1px solid var(--stroke); /* #E3E2DE */
+  border-radius: var(--radius-md); /* 1.5rem / 24px */
+  padding: var(--space-lg); /* 20px */
+  margin-bottom: var(--gutter); /* 16px */
+  overflow: hidden;
+  position: relative;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.cupertino-card-white,
+.card-white {
+  background-color: #ffffff;
+}
+
+/* Nested Data Cells (2x2 grid tiles in stats cards) */
+.nested-data-cell {
+  background-color: #ffffff;
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Section Header & Rows */
+.cupertino-section {
+  margin-bottom: var(--space-md);
+}
+
+.cupertino-section-header,
+.section-header {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 4px 6px;
+}
+
+.cupertino-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--stroke);
+  font-size: 0.9rem;
+  transition: background-color 100ms ease;
+}
+
+.cupertino-row:last-child {
+  border-bottom: none;
+}
+
+.cupertino-row:hover,
+.settings-interactive-row:hover {
+  background-color: var(--surface-neutral-2);
+}
+
+.cupertino-row:active,
+.settings-interactive-row:active {
+  background-color: var(--surface-neutral-2) !important;
+  opacity: 0.92;
+}
+
+/* ==========================================================================
+   Buttons & Interactive Pills (True Continuous Pill Geometry)
+   ========================================================================== */
+
+.cupertino-btn,
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  min-height: 44px;
+  border-radius: var(--radius-full); /* 9999px continuous pill */
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 140ms ease;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.cupertino-btn:active,
+.btn:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+/* Primary Action Button: #111111 ink surface with white text */
+.cupertino-btn-primary,
+.btn-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+  border: 1px solid var(--primary);
+}
+
+.cupertino-btn-primary:hover,
+.btn-primary:hover {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+/* Secondary Action Button: Surface #ffffff with 1px #E3E2DE stroke */
+.cupertino-btn-secondary,
+.btn-secondary {
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--stroke);
+}
+
+.cupertino-btn-secondary:hover,
+.btn-secondary:hover {
+  background-color: var(--surface-neutral-1);
+  border-color: var(--stroke-pressed);
+}
+
+/* Plain / Ghost Button */
+.cupertino-btn-plain,
+.btn-ghost {
+  background: transparent;
+  color: var(--primary);
+  border-color: transparent;
+  padding: 6px 10px;
+  min-height: auto;
+}
+
+.cupertino-btn-plain:hover,
+.btn-ghost:hover {
+  background-color: var(--surface-neutral-2);
+}
+
+/* Destructive Button */
+.cupertino-btn-destructive,
+.btn-destructive {
+  background-color: #ffffff;
+  color: var(--error);
+  border: 1px solid #ffdad6;
+}
+
+.cupertino-btn-destructive:hover,
+.btn-destructive:hover {
+  background-color: #fff1f0;
+}
+
+/* Icon / Round Button: pure circular 40px or 48px */
+.cupertino-btn-icon,
+.btn-icon {
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--stroke);
+}
+
+.cupertino-btn-icon:hover,
+.btn-icon:hover {
+  background-color: var(--surface-neutral-1);
+}
+
+.cupertino-btn-icon-sm,
+.btn-icon-sm {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: var(--radius-full);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #ffffff;
+  color: var(--primary);
+  border: 1px solid var(--stroke);
+}
+
+.cupertino-btn-icon-sm:hover,
+.btn-icon-sm:hover {
+  background-color: var(--surface-neutral-1);
+}
+
+/* Small Button */
+.cupertino-btn-sm,
+.btn-sm {
+  padding: 6px 12px;
+  min-height: 32px;
+  font-size: 0.78rem;
+}
+
+/* ==========================================================================
+   Segmented Controls & Filter Chips
+   ========================================================================== */
+
+/* Segmented Control Track: #F1F1EF pill background */
+.cupertino-segmented,
+.segmented-track {
+  display: flex;
+  background-color: var(--surface-neutral-2); /* #F1F1EF */
+  border-radius: var(--radius-full);
+  padding: 3px;
+  gap: 3px;
+  user-select: none;
+  border: 1px solid var(--stroke);
+}
+
+.cupertino-segment-item,
+.segmented-item {
+  flex: 1;
+  padding: 7px 14px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: all 140ms ease;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.cupertino-segment-item.active,
+.segmented-item.active,
+.cupertino-segment-item.active-dark {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  border: 1px solid #000000 !important;
+  font-weight: 700;
+}
+
+/* Filter Chips / Choice Chips */
+.filter-chip,
+.choice-chip,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--stroke);
+  background-color: var(--surface-neutral-1);
+  color: var(--primary);
+  transition: all 130ms ease;
+  white-space: nowrap;
+}
+
+.filter-chip:hover,
+.choice-chip:hover,
+.chip:hover {
+  background-color: var(--surface-neutral-2);
+}
+
+.filter-chip.active,
+.choice-chip.active,
+.chip.active,
+.filter-chip[aria-pressed="true"],
+.choice-chip[aria-pressed="true"] {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+.filter-chip.active svg,
+.choice-chip.active svg,
+.chip.active svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* ==========================================================================
+   Item Count Message Bubble inside Filter/Choice Chips & Segmented Controls
+   ========================================================================== */
+.chip-count-bubble,
+.chip-badge,
+.chip-bubble,
+.filter-chip-count,
+.choice-chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-left: 5px;
+  transition: all 130ms ease;
+  /* Default / non-active chips: darker grey background with greyish-black text */
+  background-color: #d8d8d4 !important;
+  color: #242424 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* For ACTIVE chips (black bg): White bubble with black number inside */
+.filter-chip.active .chip-count-bubble,
+.choice-chip.active .chip-count-bubble,
+.chip.active .chip-count-bubble,
+.cupertino-segment-item.active .chip-count-bubble,
+.segmented-item.active .chip-count-bubble,
+.filter-chip[aria-pressed="true"] .chip-count-bubble,
+.choice-chip[aria-pressed="true"] .chip-count-bubble,
+[role="tab"][aria-selected="true"] .chip-count-bubble {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.filter-chip.active .chip-count-bubble *,
+.choice-chip.active .chip-count-bubble *,
+.chip.active .chip-count-bubble *,
+.cupertino-segment-item.active .chip-count-bubble *,
+.segmented-item.active .chip-count-bubble *,
+.filter-chip[aria-pressed="true"] .chip-count-bubble *,
+.choice-chip[aria-pressed="true"] .chip-count-bubble * {
+  color: #000000 !important;
+}
+
+/* For NON-ACTIVE chips: Darker grey background with greyish-black text */
+.filter-chip:not(.active) .chip-count-bubble,
+.choice-chip:not(.active) .chip-count-bubble,
+.chip:not(.active) .chip-count-bubble,
+.cupertino-segment-item:not(.active) .chip-count-bubble,
+.segmented-item:not(.active) .chip-count-bubble,
+.filter-chip:not([aria-pressed="true"]) .chip-count-bubble,
+.choice-chip:not([aria-pressed="true"]) .chip-count-bubble,
+[role="tab"]:not([aria-selected="true"]) .chip-count-bubble {
+  background-color: #d8d8d4 !important;
+  color: #242424 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.filter-chip:not(.active) .chip-count-bubble *,
+.choice-chip:not(.active) .chip-count-bubble *,
+.chip:not(.active) .chip-count-bubble *,
+.cupertino-segment-item:not(.active) .chip-count-bubble *,
+.segmented-item:not(.active) .chip-count-bubble * {
+  color: #242424 !important;
+}
+
+/* ==========================================================================
+   Checklists (Notion-Inspired Minimalist Checklists)
+   ========================================================================== */
+
+.notion-checklist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.notion-checklist-row:hover {
+  background-color: var(--surface-neutral-1);
+}
+
+.notion-checkbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--stroke-pressed); /* #D4D4D1 */
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 130ms ease;
+}
+
+.notion-checkbox.checked {
+  background-color: var(--primary); /* #111111 */
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.notion-checklist-text {
+  font-size: 0.88rem;
+  color: var(--on-surface);
+  transition: color 130ms ease;
+}
+
+.notion-checklist-text.checked {
+  color: #8c8c8c;
+  text-decoration: line-through;
+}
+
+/* ==========================================================================
+   Progress Bars & Status Indicators
+   ========================================================================== */
+
+.minimal-progress-track {
+  width: 100%;
+  height: 6px;
+  background-color: var(--surface-neutral-2); /* #F1F1EF */
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.minimal-progress-bar {
+  height: 100%;
+  background-color: var(--primary); /* #111111 */
+  border-radius: var(--radius-full);
+  transition: width 240ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   Form Controls
+   ========================================================================== */
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 10px 16px;
+  background-color: var(--surface-neutral-1); /* #F7F7F6 */
+  color: var(--on-surface);
+  border: 1px solid var(--stroke); /* #E3E2DE */
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  transition: all 130ms ease;
+}
+
+.textarea {
+  border-radius: 14px;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  background-color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #8c8c8c;
+}
+
+.label,
+.label-micro {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ==========================================================================
+   Floating Action Button (FAB)
+   ========================================================================== */
+
+#fab-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 44;
+}
+
+.cupertino-fab {
+  pointer-events: auto;
+  position: absolute;
+  bottom: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + 20px);
+  right: max(18px, env(safe-area-inset-right, 18px));
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-full);
+  background-color: var(--primary); /* #111111 */
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-fab);
+  cursor: pointer;
+  z-index: 44;
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 140ms ease;
+}
+
+.cupertino-fab:hover {
+  background-color: #000000;
+  transform: translateY(-2px);
+}
+
+.cupertino-fab:active {
+  transform: scale(0.92);
+}
+
+/* ==========================================================================
+   Bottom Tab Bar Navigation (Native Safe-Area Inset)
+   ========================================================================== */
+
+.cupertino-tab-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--tab-bar-height) + env(safe-area-inset-bottom, 0px) + 6px);
+  padding-top: 6px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(8px, env(safe-area-inset-right, 0px));
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid var(--stroke);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-around;
+  z-index: 45;
+}
+
+.cupertino-tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--secondary);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 500;
+  min-width: 56px;
+  transition: color 120ms ease;
+  padding: 4px 0;
+}
+
+.cupertino-tab-item.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Home Indicator Bar (hidden to avoid double-bars on Android) */
+.home-indicator {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Modal Sheets & Dialogs (Safe Area Responsive)
+   ========================================================================== */
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-sheet {
+  background-color: #ffffff;
+  width: 100%;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  max-height: 90%;
+  overflow-y: auto;
+  box-shadow: var(--shadow-float);
+  border-top: 1px solid var(--stroke);
+  display: flex;
+  flex-direction: column;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
+  animation: modalSheetIn 200ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.sheet-drag-handle {
+  width: 36px;
+  height: 4px;
+  background-color: var(--stroke);
+  border-radius: 100px;
+  margin: 10px auto 4px;
+}
+
+@keyframes modalSheetIn {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* ==========================================================================
+   Toasts & Alerts
+   ========================================================================== */
+
+.toast-container {
+  position: absolute;
+  top: calc(max(16px, env(safe-area-inset-top, 0px)) + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 420px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #111111;
+  color: #ffffff;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: var(--shadow-ambient);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Leaflet OpenStreetMap Monochromatic Tweaks
+   ========================================================================== */
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body) !important;
+  z-index: 10 !important;
+  border: 1px solid var(--stroke);
+}
+
+/* ==========================================================================
+   Alert & Dialog Component Library (Monochrome Voyage v2.4)
+   Strictly following Sketch Master Component Anatomy
+   ========================================================================== */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: dialogBackdropIn 150ms ease-out;
+}
+
+.dialog-frame {
+  background-color: #ffffff;
+  color: #111111;
+  width: 100%;
+  max-width: 380px;
+  border-radius: 24px;
+  border: 1px solid var(--stroke);
+  box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.15), 0 10px 15px -5px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  animation: dialogScaleIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] .dialog-frame,
+.dark .dialog-frame {
+  background-color: #1c1c1e;
+  color: #f5f5f7;
+  border-color: #2c2c2e;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+}
+
+.dialog-icon-pill {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dialog-icon-pill.variant-neutral,
+.dialog-icon-pill.variant-default {
+  background-color: #f3f4f3;
+  color: #111111;
+}
+[data-theme="dark"] .dialog-icon-pill.variant-neutral,
+[data-theme="dark"] .dialog-icon-pill.variant-default,
+.dark .dialog-icon-pill.variant-neutral,
+.dark .dialog-icon-pill.variant-default {
+  background-color: #2c2c2e;
+  color: #f5f5f7;
+}
+
+.dialog-icon-pill.variant-destructive,
+.dialog-icon-pill.variant-danger {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+[data-theme="dark"] .dialog-icon-pill.variant-destructive,
+[data-theme="dark"] .dialog-icon-pill.variant-danger,
+.dark .dialog-icon-pill.variant-destructive,
+.dark .dialog-icon-pill.variant-danger {
+  background-color: rgba(69, 10, 10, 0.4);
+  color: #f87171;
+}
+
+.dialog-icon-pill.variant-warning {
+  background-color: #fffbeb;
+  color: #d97706;
+}
+[data-theme="dark"] .dialog-icon-pill.variant-warning,
+.dark .dialog-icon-pill.variant-warning {
+  background-color: rgba(69, 26, 3, 0.4);
+  color: #fbbf24;
+}
+
+.dialog-icon-pill.variant-success {
+  background-color: #ecfdf5;
+  color: #059669;
+}
+[data-theme="dark"] .dialog-icon-pill.variant-success,
+.dark .dialog-icon-pill.variant-success {
+  background-color: rgba(6, 78, 59, 0.4);
+  color: #34d399;
+}
+
+.dialog-kicker {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8e8e93;
+  margin-top: 14px;
+  margin-bottom: 2px;
+}
+
+.dialog-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: inherit;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.dialog-body {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #6e6e73;
+  margin: 6px 0 0;
+}
+[data-theme="dark"] .dialog-body,
+.dark .dialog-body {
+  color: #8e8e93;
+}
+
+.dialog-callout-warning {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  color: #92400e;
+  font-weight: 500;
+  margin-top: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+[data-theme="dark"] .dialog-callout-warning,
+.dark .dialog-callout-warning {
+  background-color: rgba(120, 53, 15, 0.2);
+  border-color: rgba(217, 119, 6, 0.3);
+  color: #fcd34d;
+}
+
+.dialog-callout-info {
+  background-color: #f7f7f6;
+  border: 1px solid #e3e2de;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  color: #444748;
+  margin-top: 12px;
+  line-height: 1.45;
+}
+[data-theme="dark"] .dialog-callout-info,
+.dark .dialog-callout-info {
+  background-color: #18181a;
+  border-color: #2c2c2e;
+  color: #a1a1a6;
+}
+
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn-dialog-primary {
+  background-color: #111111;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex: 1;
+}
+.btn-dialog-primary:hover {
+  background-color: #000000;
+}
+.btn-dialog-primary:active {
+  transform: scale(0.98);
+}
+[data-theme="dark"] .btn-dialog-primary,
+.dark .btn-dialog-primary {
+  background-color: #ffffff;
+  color: #111111;
+}
+[data-theme="dark"] .btn-dialog-primary:hover,
+.dark .btn-dialog-primary:hover {
+  background-color: #f5f5f7;
+}
+
+.btn-dialog-secondary {
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #e3e2de;
+  border-radius: 9999px;
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex: 1;
+}
+.btn-dialog-secondary:hover {
+  background-color: #f9f9f8;
+  border-color: #d4d4d1;
+}
+.btn-dialog-secondary:active {
+  transform: scale(0.98);
+}
+[data-theme="dark"] .btn-dialog-secondary,
+.dark .btn-dialog-secondary {
+  background-color: transparent;
+  color: #d1d5db;
+  border-color: #3a3a3c;
+}
+[data-theme="dark"] .btn-dialog-secondary:hover,
+.dark .btn-dialog-secondary:hover {
+  background-color: #2c2c2e;
+}
+
+.btn-dialog-destructive {
+  background-color: #dc2626;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  min-height: 44px;
+  padding: 0 20px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  flex: 1;
+}
+.btn-dialog-destructive:hover {
+  background-color: #b91c1c;
+}
+.btn-dialog-destructive:active {
+  transform: scale(0.98);
+}
+
+@keyframes dialogBackdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogScaleIn {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}

@@ -1,0 +1,51 @@
+{
+  "name": "temp-travelnest",
+  "private": true,
+  "version": "2.4.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "cap:build": "npm run build && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "cap:run": "npx cap run android",
+    "cap:build:ios": "npm run build && npx cap sync ios",
+    "cap:open:ios": "npx cap open ios",
+    "cap:run:ios": "npx cap run ios",
+    "cap:sync": "npx cap sync",
+    "lint": "oxlint",
+    "test": "jiti src/tests/onboardingAndData.test.ts && jiti src/tests/safeUpdateAndMigration.test.ts && jiti src/tests/dummyRemovalAndTripDelete.test.ts && jiti src/tests/dialogComponentLibrary.test.ts && jiti src/tests/collectionTripAssociation.test.ts && jiti src/tests/spotlightTour.test.ts && jiti src/tests/travelCompanion.test.ts",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/status-bar": "^8.0.4",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/jszip": "^3.4.0",
+    "@types/leaflet": "^1.9.22",
+    "canvas-confetti": "^1.9.4",
+    "dexie": "^4.4.6",
+    "dexie-react-hooks": "^4.4.0",
+    "jszip": "^3.10.2",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.54.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwindcss": "^4.3.3",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  }
+}

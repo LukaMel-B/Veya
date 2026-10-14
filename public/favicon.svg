@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#0B0C0E" />
+  <!-- Outer Rings -->
+  <circle cx="50" cy="50" r="40" fill="none" stroke="#333338" stroke-width="1.8" />
+  <circle cx="50" cy="50" r="36" fill="none" stroke="#222226" stroke-width="1.2" />
+  
+  <!-- Cardinal Tick Marks -->
+  <line x1="50" y1="14" x2="50" y2="18" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+  <line x1="50" y1="82" x2="50" y2="86" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+  <line x1="14" y1="50" x2="18" y2="50" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+  <line x1="82" y1="50" x2="86" y2="50" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Sub-cardinal Tick Marks -->
+  <line x1="24.5" y1="24.5" x2="27.5" y2="27.5" stroke="#55555C" stroke-width="1.2" stroke-linecap="round" />
+  <line x1="75.5" y1="24.5" x2="72.5" y2="27.5" stroke="#55555C" stroke-width="1.2" stroke-linecap="round" />
+  <line x1="24.5" y1="75.5" x2="27.5" y2="72.5" stroke="#55555C" stroke-width="1.2" stroke-linecap="round" />
+  <line x1="75.5" y1="75.5" x2="72.5" y2="72.5" stroke="#55555C" stroke-width="1.2" stroke-linecap="round" />
+
+  <!-- Compass Star Needles -->
+  <!-- North (White / Off-White) -->
+  <polygon points="50,21 56.5,50 50,50" fill="#FFFFFF" />
+  <polygon points="50,21 43.5,50 50,50" fill="#D1D1D6" />
+  
+  <!-- South (Mid-Gray / Dark-Gray) -->
+  <polygon points="50,79 56.5,50 50,50" fill="#8E8E93" />
+  <polygon points="50,79 43.5,50 50,50" fill="#636366" />
+  
+  <!-- East (Light-Gray / Mid-Gray) -->
+  <polygon points="79,50 50,43.5 50,50" fill="#E5E5EA" />
+  <polygon points="79,50 50,56.5 50,50" fill="#7C7C80" />
+  
+  <!-- West (Off-White / Dark-Gray) -->
+  <polygon points="21,50 50,43.5 50,50" fill="#D1D1D6" />
+  <polygon points="21,50 50,56.5 50,50" fill="#636366" />
+  
+  <!-- Center Pin -->
+  <circle cx="50" cy="50" r="4" fill="#0B0C0E" stroke="#FFFFFF" stroke-width="1.2" />
+  <circle cx="50" cy="50" r="1.8" fill="#FFFFFF" />
+</svg>
