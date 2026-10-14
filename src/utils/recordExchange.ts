@@ -63,7 +63,7 @@ export async function exportSelectedTripPack(tripId: string): Promise<RecordPack
     format: 'travelnest-pack',
     version: 1,
     exportedAt: new Date().toISOString(),
-    generator: 'TravelNest v2.5 Companion',
+    generator: 'Veya v2.6 Companion',
     manifest: {
       title: trip.name,
       description: `${trip.destination} (${itineraryEvents.length} activities, ${bookings.length} bookings, ${transportLegs.length} transit legs)`,
@@ -105,7 +105,7 @@ export async function exportSelectedRecipesPack(recipeIds?: string[]): Promise<R
     format: 'travelnest-recipe-pack',
     version: 1,
     exportedAt: new Date().toISOString(),
-    generator: 'TravelNest v2.5 Companion',
+    generator: 'Veya v2.6 Companion',
     manifest: {
       title: `${recipes.length} Selected Recipes`,
       description: 'Cookbook export with ingredient prices and instructions',

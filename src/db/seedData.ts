@@ -814,7 +814,7 @@ export async function seedSampleData(mode: 'replace' | 'merge' = 'replace') {
       currency: 'INR',
       status: 'confirmed',
       startDate: formatOffsetDate(13),
-      notes: 'QR code barcode tickets stored in TravelNest document vault.',
+      notes: 'QR code barcode tickets stored in Veya document vault.',
       createdAt: new Date().toISOString(),
     },
   ];

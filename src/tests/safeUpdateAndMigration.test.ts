@@ -47,7 +47,7 @@ async function runTests() {
   const capacitorContent = fs.readFileSync(capacitorConfigPath, 'utf8');
   
   assert(capacitorContent.includes("appId: 'com.travelnest.app'"), "Capacitor appId is locked to 'com.travelnest.app'");
-  assert(capacitorContent.includes("appName: 'TravelNest'"), "Capacitor appName is 'TravelNest'");
+  assert(capacitorContent.includes("appName: 'Veya'"), "Capacitor appName is 'Veya'");
   assert(capacitorContent.includes("androidScheme: 'https'"), "Capacitor androidScheme is locked to 'https' (maintains https://localhost IndexedDB origin)");
 
   // Read android/app/build.gradle
@@ -165,7 +165,7 @@ async function runTests() {
   });
 
   const exportResult = await db.exportFullData();
-  assert(exportResult.appName === 'TravelNest', 'Export has appName = TravelNest');
+  assert(exportResult.appName === 'Veya', 'Export has appName = Veya');
   assert(exportResult.version === 4, 'Export schema version is 4 (includes user profile)');
   assert(exportResult.userProfile?.displayName === 'Alex Traveler', 'Export includes userProfile.displayName');
   assert(exportResult.userProfile?.preferredCurrency === 'CHF', 'Export includes userProfile.preferredCurrency');

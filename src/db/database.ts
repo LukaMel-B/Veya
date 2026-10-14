@@ -380,7 +380,7 @@ export class TravelNestDatabase extends Dexie {
 
     return {
       version: 4,
-      appName: 'TravelNest',
+      appName: 'Veya',
       exportedAt: new Date().toISOString(),
       userProfile,
       data: {
@@ -409,8 +409,8 @@ export class TravelNestDatabase extends Dexie {
    * Import data with merge or overwrite option
    */
   async importFullData(payload: any, mode: 'merge' | 'overwrite' = 'overwrite') {
-    if (!payload?.data || payload.appName !== 'TravelNest') {
-      throw new Error('Invalid TravelNest backup file format.');
+    if (!payload?.data || (payload.appName !== 'Veya' && payload.appName !== 'TravelNest')) {
+      throw new Error('Invalid Veya backup file format.');
     }
 
     const {
