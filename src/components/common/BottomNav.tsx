@@ -23,7 +23,7 @@ export const BottomNav: React.FC = () => {
   const navItems: { id: MainNavTab; label: string; icon: React.ReactNode }[] = [
     { id: 'home', label: 'Home', icon: <Compass size={20} strokeWidth={1.8} /> },
     { id: 'trips', label: 'My Trips', icon: <Luggage size={20} strokeWidth={1.8} /> },
-    { id: 'collection', label: 'Collection', icon: <Bookmark size={20} strokeWidth={1.8} /> },
+    { id: 'collection', label: 'Finds', icon: <Bookmark size={20} strokeWidth={1.8} /> },
     { id: 'journal', label: 'Journal', icon: <BookOpen size={20} strokeWidth={1.8} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={20} strokeWidth={1.8} /> },
   ];

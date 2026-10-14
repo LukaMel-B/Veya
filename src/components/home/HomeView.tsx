@@ -259,7 +259,7 @@ export const HomeView: React.FC = () => {
             Welcome to Veya
           </h3>
           <p style={{ color: 'var(--secondary)', fontSize: '0.82rem', margin: '6px auto 18px', maxWidth: '320px', lineHeight: '1.45' }}>
-            Plan offline itineraries, organize country collections, track budgets, and write memory journals — 100% stored on this device.
+            Plan offline itineraries, organize country finds, track budgets, and write memory journals — 100% stored on this device.
           </p>
           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <button
@@ -374,7 +374,7 @@ export const HomeView: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <BookmarkCheck size={15} strokeWidth={2} color="var(--primary)" />
             <span className="label-micro" style={{ margin: 0 }}>
-              Saved Field Notes ({savedItemsCount})
+              Saved Finds ({savedItemsCount})
             </span>
           </div>
           <button

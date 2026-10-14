@@ -281,6 +281,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     setUserProfile(updated);
     setIsOnboardingOpen(false);
+
+    // Seed the user's dream country as the first and only initial Finds folder
+    if (profile.dreamCountry && profile.dreamCountry.trim()) {
+      db.saveCountry(profile.dreamCountry.trim()).catch((err) => {
+        console.warn('Failed to seed dream country folder:', err);
+      });
+    }
+
     showToast(`Welcome to Veya, ${updated.displayName}!`, 'success');
     if (startTourAfter) {
       setTimeout(() => {

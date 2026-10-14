@@ -9,6 +9,7 @@ export const DEFAULT_USER_PROFILE: UserProfile = {
   displayName: 'Traveler',
   avatar: 'compass',
   homeCountry: 'India',
+  dreamCountry: '',
   preferredCurrency: 'INR',
   travelStyles: ['Cultural & Heritage', 'Food & Dining'],
   onboardingCompleted: false,

@@ -52,7 +52,7 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
   const [selectedTripId, setSelectedTripId] = useState<string | undefined>(preselectedTripId || itemToEdit?.tripId);
 
   // Country Selection
-  const [selectedCountry, setSelectedCountry] = useState<string>('Japan');
+  const [selectedCountry, setSelectedCountry] = useState<string>(preselectedCountry || '');
   const [isCreatingNewCountry, setIsCreatingNewCountry] = useState(false);
   const [newCountryInput, setNewCountryInput] = useState('');
 
@@ -62,21 +62,22 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [customCategories, setCustomCategories] = useState<SavedCategory[]>([]);
 
-  // Collect all known countries
+  // Collect all known countries from db and items
   const knownCountries = Array.from(
     new Set([
-      'Japan',
-      'Switzerland',
-      'Kazakhstan',
-      'Iceland',
-      'Portugal',
-      'Italy',
-      'France',
       ...(allCountries || []).map((c) => c.name).filter(Boolean),
       ...(allItems || []).map((i) => i.country).filter(Boolean),
       ...(allTrips || []).map((t) => t.country || detectCountry(t.destination)).filter(Boolean),
     ])
   ).sort();
+
+  useEffect(() => {
+    if (preselectedCountry) {
+      setSelectedCountry(preselectedCountry);
+    } else if (!selectedCountry && allCountries && allCountries.length > 0) {
+      setSelectedCountry(allCountries[0].name);
+    }
+  }, [preselectedCountry, allCountries]);
 
   // Extract custom categories
   useEffect(() => {

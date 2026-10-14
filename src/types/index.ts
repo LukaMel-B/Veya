@@ -221,6 +221,7 @@ export interface UserProfile {
   displayName: string;
   avatar: string; // 'compass' | 'mountain' | 'plane' | 'camera' | 'palmtree' | 'sparkles'
   homeCountry: string;
+  dreamCountry?: string;
   preferredCurrency: string;
   travelStyles: string[];
   onboardingCompleted: boolean;

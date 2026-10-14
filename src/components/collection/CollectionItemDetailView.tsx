@@ -138,7 +138,7 @@ export const CollectionItemDetailView: React.FC<CollectionItemDetailViewProps> =
         status: item.status === 'archived' ? 'archived' : 'inbox',
         isPlanned: false,
       });
-      showToast(`Removed from trip. Kept in ${displayCountry} collection.`, 'info');
+      showToast(`Removed from trip. Kept in ${displayCountry} finds.`, 'info');
       setShowUnlinkConfirm(false);
     } catch (err: any) {
       showToast('Failed to unlink from trip: ' + err.message, 'error');
@@ -216,7 +216,7 @@ export const CollectionItemDetailView: React.FC<CollectionItemDetailViewProps> =
           }}
         >
           <ChevronLeft size={20} strokeWidth={2.2} />
-          <span>Back</span>
+          <span>Finds</span>
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

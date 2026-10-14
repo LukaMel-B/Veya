@@ -33,8 +33,8 @@ export const QuickAddModal: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [tags, setTags] = useState('');
 
-  // Country & Category fields for Collections
-  const [selectedCountry, setSelectedCountry] = useState<string>('Japan');
+  // Country & Category fields for Finds
+  const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [isCreatingNewCountry, setIsCreatingNewCountry] = useState(false);
   const [newCountryInput, setNewCountryInput] = useState('');
 
@@ -57,6 +57,12 @@ export const QuickAddModal: React.FC = () => {
   const allCollectionItems = useLiveQuery(() => db.collectionItems.toArray(), []);
   const allCountries = useLiveQuery(() => db.countries.toArray(), []);
 
+  useEffect(() => {
+    if (!selectedCountry && allCountries && allCountries.length > 0) {
+      setSelectedCountry(allCountries[0].name);
+    }
+  }, [allCountries, selectedCountry]);
+
   // Custom categories from DB
   const dbCollectionCategories = useLiveQuery(
     () => db.categories.where('scope').equals('collection').toArray(),
@@ -68,16 +74,9 @@ export const QuickAddModal: React.FC = () => {
     []
   );
 
-  // Collect all known countries
+  // Collect all known countries from db and records
   const knownCountries = Array.from(
     new Set([
-      'Japan',
-      'Switzerland',
-      'Kazakhstan',
-      'Iceland',
-      'Portugal',
-      'Italy',
-      'France',
       ...(allCountries || []).map((c) => c.name).filter(Boolean),
       ...(allCollectionItems || []).map((i) => i.country).filter(Boolean),
       ...(trips || []).map((t) => t.country || detectCountry(t.destination)).filter(Boolean),

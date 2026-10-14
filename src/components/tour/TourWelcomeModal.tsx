@@ -140,7 +140,7 @@ export const TourWelcomeModal: React.FC<TourWelcomeModalProps> = ({
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>🔖</span>
-            <span><strong>Country Collections:</strong> Save ideas from Instagram & blogs</span>
+            <span><strong>Country Finds:</strong> Save ideas from Instagram & blogs</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>📖</span>

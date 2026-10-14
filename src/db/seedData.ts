@@ -341,26 +341,9 @@ export async function seedInitialDataIfEmpty() {
   }
 
   try {
-    // 1. Ensure country table has standard countries
-    const defaultCountries = [
-      'Japan',
-      'Switzerland',
-      'Kazakhstan',
-      'Iceland',
-      'Portugal',
-      'Italy',
-      'France',
-      'India',
-      'Thailand',
-      'Spain',
-      'United States',
-      'United Kingdom',
-      'Australia',
-      'Germany',
-    ];
-    for (const c of defaultCountries) {
-      await db.saveCountry(c);
-    }
+    // 1. Genuinely new installations start with a blank Finds library.
+    // The user's chosen dream country will be initialized during onboarding.
+    // (No pre-populated countries are seeded)
 
     // 1a. For existing installations, ensure existing trips have country populated
     const allTrips = await db.trips.toArray();

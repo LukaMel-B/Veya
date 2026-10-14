@@ -32,6 +32,7 @@ export const OnboardingModal: React.FC = () => {
   const [displayName, setDisplayName] = useState(userProfile.displayName || 'Traveler');
   const [avatar, setAvatar] = useState(userProfile.avatar || 'compass');
   const [homeCountry, setHomeCountry] = useState(userProfile.homeCountry || 'India');
+  const [dreamCountry, setDreamCountry] = useState(userProfile.dreamCountry || 'Japan');
   const [preferredCurrency, setPreferredCurrency] = useState(userProfile.preferredCurrency || 'INR');
   const [travelStyles, setTravelStyles] = useState<string[]>(
     userProfile.travelStyles?.length ? userProfile.travelStyles : ['Cultural & Heritage', 'Food & Dining']
@@ -55,6 +56,7 @@ export const OnboardingModal: React.FC = () => {
         displayName: displayName.trim() || 'Traveler',
         avatar,
         homeCountry,
+        dreamCountry: dreamCountry.trim() || 'Japan',
         preferredCurrency,
         travelStyles,
       },
@@ -68,6 +70,7 @@ export const OnboardingModal: React.FC = () => {
         displayName: displayName.trim() || 'Traveler',
         avatar,
         homeCountry,
+        dreamCountry: dreamCountry.trim(),
         preferredCurrency,
         travelStyles,
       },
@@ -186,7 +189,7 @@ export const OnboardingModal: React.FC = () => {
                   <Compass size={28} strokeWidth={2.2} />
                 </div>
                 <span className="label-micro" style={{ marginBottom: '4px', display: 'block' }}>
-                  WELCOME TO TRAVELNEST
+                  WELCOME TO VEYA
                 </span>
                 <h2
                   style={{
@@ -233,7 +236,7 @@ export const OnboardingModal: React.FC = () => {
                 >
                   <Bookmark size={18} color="var(--primary)" strokeWidth={2.2} />
                   <div style={{ fontSize: '0.84rem', fontWeight: 700, margin: '6px 0 2px', color: 'var(--primary)' }}>
-                    Collections
+                    Finds
                   </div>
                   <div style={{ fontSize: '0.72rem', color: 'var(--secondary)', lineHeight: 1.4 }}>
                     Curate spots, food stalls, and tips by country.
@@ -386,6 +389,73 @@ export const OnboardingModal: React.FC = () => {
                 </p>
               </div>
 
+              {/* Dream Country to Visit (Seeds First Finds Folder) */}
+              <div
+                style={{
+                  padding: '14px',
+                  backgroundColor: 'var(--surface-neutral-1)',
+                  borderRadius: '16px',
+                  border: '1px solid var(--stroke)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Compass size={15} color="var(--primary)" />
+                  <span className="label-micro" style={{ margin: 0 }}>
+                    YOUR DREAM DESTINATION
+                  </span>
+                </div>
+                <label style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>
+                  What is your dream country to visit?
+                </label>
+                <p style={{ color: 'var(--secondary)', fontSize: '0.78rem', margin: 0, lineHeight: 1.4 }}>
+                  This will become your first and only <strong>Finds</strong> folder once you onboard, ready for saving spots and research.
+                </p>
+
+                <div style={{ position: 'relative', marginTop: '4px' }}>
+                  <input
+                    type="text"
+                    value={dreamCountry}
+                    onChange={(e) => setDreamCountry(e.target.value)}
+                    placeholder="e.g. Japan, Switzerland, Iceland, Italy..."
+                    className="input"
+                    style={{
+                      height: '44px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      borderRadius: '12px',
+                      padding: '0 14px',
+                      backgroundColor: '#FFFFFF',
+                      border: '1px solid var(--stroke)',
+                    }}
+                  />
+                </div>
+
+                {/* Popular Dream Country Quick-Pills */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '2px' }}>
+                  {['Japan', 'Switzerland', 'Italy', 'Iceland', 'France', 'Portugal', 'Thailand', 'Norway'].map((c) => {
+                    const isSelected = dreamCountry.toLowerCase() === c.toLowerCase();
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setDreamCountry(c)}
+                        className={`filter-chip ${isSelected ? 'active' : ''}`}
+                        style={{
+                          fontSize: '0.72rem',
+                          padding: '3px 10px',
+                          borderRadius: '9999px',
+                        }}
+                      >
+                        {c}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Home Country & Preferred Currency Side-by-Side */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
@@ -525,6 +595,13 @@ export const OnboardingModal: React.FC = () => {
                   <span style={{ fontSize: '0.76rem', color: 'var(--secondary)', fontWeight: 500 }}>Base & Currency</span>
                   <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--primary)' }}>
                     {homeCountry} · {preferredCurrency}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.76rem', color: 'var(--secondary)', fontWeight: 500 }}>Initial Finds Folder</span>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--primary)' }}>
+                    {dreamCountry.trim() || 'None selected'}
                   </span>
                 </div>
 

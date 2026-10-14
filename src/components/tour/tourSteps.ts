@@ -51,10 +51,10 @@ export const SPOTLIGHT_TOUR_STEPS: TourStep[] = [
     id: 'saved-collections',
     tab: 'collection',
     targetId: 'nav-collection',
-    badge: 'IDEAS & DOSSIERS',
-    title: 'Country Collections & Ideas',
+    badge: 'FINDS & DOSSIERS',
+    title: 'Country Finds & Ideas',
     description:
-      'Found a restaurant reel on Instagram or a scenic lookout in a blog? Save it to your country collection (like Japan or Kazakhstan) even before you have fixed dates. You can assign it to a trip later.',
+      'Found a restaurant reel on Instagram or a scenic lookout in a blog? Save it to your country finds folder even before you have fixed dates. You can assign it to a trip later.',
     helperCue: 'Curation stays organized by country folders with custom tags.',
     placementPreference: 'top',
   },

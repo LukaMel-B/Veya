@@ -192,6 +192,42 @@ export class TravelNestDatabase extends Dexie {
   }
 
   /**
+   * Delete a country folder from Finds.
+   * If there are saved items inside this country, detaches them safely to 'General' (or deletes them if specified)
+   * so no personal notes, links, or photos are unexpectedly destroyed.
+   */
+  async deleteCountry(countryNameOrId: string, options: { deleteItems?: boolean } = {}): Promise<void> {
+    const trimmed = countryNameOrId.trim();
+    if (!trimmed) return;
+    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+    const id = formatted.toLowerCase();
+
+    await this.transaction('rw', [this.countries, this.collectionItems], async () => {
+      // 1. Delete the country record
+      await this.countries.delete(id);
+      await this.countries.where('name').equalsIgnoreCase(formatted).delete();
+
+      // 2. Handle items assigned to this country
+      const itemsInCountry = await this.collectionItems
+        .filter((item) => (item.country || '').trim().toLowerCase() === formatted.toLowerCase())
+        .toArray();
+
+      if (options.deleteItems) {
+        for (const item of itemsInCountry) {
+          await this.collectionItems.delete(item.id);
+        }
+      } else {
+        // Safe detachment: Move to unassigned/General so user data is never lost
+        for (const item of itemsInCountry) {
+          await this.collectionItems.update(item.id, {
+            country: 'General',
+          });
+        }
+      }
+    });
+  }
+
+  /**
    * Safe cascading delete: Deletes a trip and its trip-specific records (itinerary events,
    * bookings, expenses, essentials, documents).
    *

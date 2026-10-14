@@ -64,17 +64,11 @@ export const CollectionView: React.FC = () => {
 
     (allItems || []).forEach((item) => {
       const country = getItemEffectiveCountry(item, tripsMap);
-      if (!map.has(country)) {
-        map.set(country, []);
-      }
-      map.get(country)!.push(item);
-    });
-
-    // Also include any countries created via trips
-    (allTrips || []).forEach((trip) => {
-      const country = trip.country || detectCountry(trip.destination);
-      if (country && !map.has(country)) {
-        map.set(country, []);
+      if (country && country.toLowerCase() !== 'general') {
+        if (!map.has(country)) {
+          map.set(country, []);
+        }
+        map.get(country)!.push(item);
       }
     });
 
@@ -191,7 +185,34 @@ export const CollectionView: React.FC = () => {
     setIsCreateCountryModalOpen(false);
     setNewCountryName('');
     setOpenedCountry(formatted);
-    showToast(`Created collection for ${formatted}!`, 'success');
+    showToast(`Created finds folder for ${formatted}!`, 'success');
+  };
+
+  const handleDeleteCountry = async (e: React.MouseEvent, countryName: string, count: number) => {
+    e.stopPropagation();
+    const confirmed = await showConfirm({
+      title: `Delete "${countryName}" folder?`,
+      kicker: 'DELETE FINDS FOLDER',
+      message: count > 0
+        ? `This will remove the ${countryName} folder from your Finds. Your ${count} saved find${count > 1 ? 's' : ''} will be kept safely in All Saved Finds.`
+        : `This will remove the ${countryName} folder from your Finds.`,
+      confirmText: 'Delete Folder',
+      cancelText: 'Keep Folder',
+      variant: 'destructive',
+      icon: 'trash',
+    });
+
+    if (confirmed) {
+      try {
+        await db.deleteCountry(countryName);
+        if (openedCountry?.toLowerCase() === countryName.toLowerCase()) {
+          setOpenedCountry(null);
+        }
+        showToast(`Deleted ${countryName} folder.`, 'info');
+      } catch (err: any) {
+        showToast('Error deleting country folder: ' + err.message, 'error');
+      }
+    }
   };
 
   const handleDeleteItem = async (e: React.MouseEvent, id: string) => {
@@ -246,10 +267,10 @@ export const CollectionView: React.FC = () => {
             <div>
               <div className="label-micro">Library & Research</div>
               <h2 style={{ fontSize: '1.45rem', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--primary)', margin: 0 }}>
-                Saved Collections
+                Finds
               </h2>
               <p style={{ color: 'var(--secondary)', fontSize: '0.82rem', marginTop: '2px' }}>
-                {countryCollections.length} country libraries · {allItems?.length || 0} spots
+                {countryCollections.length} country folders · {allItems?.length || 0} saved finds
               </p>
             </div>
 
@@ -292,7 +313,7 @@ export const CollectionView: React.FC = () => {
                 <Bookmark size={24} color="var(--primary)" strokeWidth={1.8} />
               </div>
               <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 4px', color: 'var(--primary)' }}>
-                Your Collection is Empty
+                Your Finds are Empty
               </h4>
               <p style={{ color: 'var(--secondary)', fontSize: '0.82rem', margin: '0 auto 18px', maxWidth: '300px', lineHeight: 1.45 }}>
                 Save restaurant recommendations, secret viewpoints, cultural sights, and travel links organized by country.
@@ -303,7 +324,7 @@ export const CollectionView: React.FC = () => {
                 style={{ margin: '0 auto', fontSize: '0.84rem', borderRadius: '9999px', padding: '0 20px' }}
               >
                 <Plus size={15} strokeWidth={2.2} />
-                <span>Save First Spot</span>
+                <span>Save First Find</span>
               </button>
             </div>
           ) : (
@@ -357,10 +378,10 @@ export const CollectionView: React.FC = () => {
                 </div>
                 <div>
                   <div style={{ color: '#ffffff', fontWeight: 700, fontSize: '1rem', letterSpacing: '-0.01em' }}>
-                    All Saved Spots
+                    All Saved Finds
                   </div>
                   <span style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: '0.72rem' }}>
-                    Complete Library
+                    All Finds
                   </span>
                 </div>
               </div>
@@ -395,7 +416,29 @@ export const CollectionView: React.FC = () => {
                     justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteCountry(e, col.country, col.count)}
+                      title={`Delete ${col.country} folder`}
+                      aria-label={`Delete ${col.country} folder`}
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        color: '#ffffff',
+                        borderRadius: '9999px',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      <Trash2 size={11} strokeWidth={2.2} />
+                    </button>
                     <span
                       style={{
                         backgroundColor: '#111111',
@@ -440,7 +483,7 @@ export const CollectionView: React.FC = () => {
           <FloatingActionButton
             onClick={() => setIsSaveModalOpen(true)}
             icon={<Plus size={24} strokeWidth={2.4} />}
-            label="Save Spot"
+            label="Save Find"
           />
         </>
       )}
@@ -464,18 +507,33 @@ export const CollectionView: React.FC = () => {
             >
               <ChevronLeft size={18} color="var(--primary)" strokeWidth={2.2} />
               <span style={{ fontSize: '0.9rem', color: 'var(--primary)', fontWeight: 600 }}>
-                Collections
+                Finds
               </span>
             </button>
 
-            <button
-              onClick={() => setIsSaveModalOpen(true)}
-              className="btn btn-primary btn-sm"
-              style={{ minHeight: '34px', padding: '4px 14px', fontSize: '0.78rem' }}
-            >
-              <Plus size={13} strokeWidth={2.2} />
-              <span>Add Spot</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {openedCountry !== '__all__' && (
+                <button
+                  type="button"
+                  onClick={(e) => handleDeleteCountry(e, openedCountry, currentCountryItems.length)}
+                  className="btn btn-ghost btn-sm"
+                  style={{ minHeight: '34px', padding: '4px 10px', fontSize: '0.78rem', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  title={`Delete ${openedCountry} folder`}
+                >
+                  <Trash2 size={13} strokeWidth={2} />
+                  <span>Delete Folder</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsSaveModalOpen(true)}
+                className="btn btn-primary btn-sm"
+                style={{ minHeight: '34px', padding: '4px 14px', fontSize: '0.78rem' }}
+              >
+                <Plus size={13} strokeWidth={2.2} />
+                <span>Add Find</span>
+              </button>
+            </div>
           </div>
 
           {/* Collection Title Banner */}
@@ -483,11 +541,11 @@ export const CollectionView: React.FC = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <h2 style={{ fontSize: '1.35rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--primary)', margin: 0 }}>
-                  {openedCountry === '__all__' ? 'All Saved Items' : `${openedCountry} Library`}
+                  {openedCountry === '__all__' ? 'All Saved Finds' : `${openedCountry} Finds`}
                 </h2>
               </div>
               <p style={{ color: 'var(--secondary)', fontSize: '0.78rem', marginTop: '2px' }}>
-                {filteredCountryItems.length} of {currentCountryItems.length} items shown
+                {filteredCountryItems.length} of {currentCountryItems.length} finds shown
               </p>
             </div>
 
@@ -868,12 +926,12 @@ export const CollectionView: React.FC = () => {
           <FloatingActionButton
             onClick={() => setIsSaveModalOpen(true)}
             icon={<Plus size={24} strokeWidth={2.4} />}
-            label="Save Spot"
+            label="Save Find"
           />
         </>
       )}
 
-      {/* Sheet Modal for creating a new Country Collection */}
+      {/* Sheet Modal for creating a new Country Finds Folder */}
       {isCreateCountryModalOpen && (
         <div className="modal-overlay" onClick={() => setIsCreateCountryModalOpen(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
@@ -895,7 +953,7 @@ export const CollectionView: React.FC = () => {
               >
                 Cancel
               </button>
-              <h3 style={{ fontSize: '0.98rem', fontWeight: 700, letterSpacing: '-0.01em' }}>New Country Collection</h3>
+              <h3 style={{ fontSize: '0.98rem', fontWeight: 700, letterSpacing: '-0.01em' }}>New Country Finds Folder</h3>
               <button
                 type="button"
                 onClick={handleCreateCountryCollection}
@@ -925,7 +983,7 @@ export const CollectionView: React.FC = () => {
               </p>
 
               <button type="submit" className="btn btn-primary" style={{ marginTop: '4px' }}>
-                <span>Create Collection</span>
+                <span>Create Folder</span>
               </button>
             </form>
           </div>
@@ -939,7 +997,7 @@ export const CollectionView: React.FC = () => {
           setIsSaveModalOpen(false);
           setItemToEdit(null);
         }}
-        preselectedCountry={openedCountry && openedCountry !== '__all__' ? openedCountry : 'Japan'}
+        preselectedCountry={openedCountry && openedCountry !== '__all__' ? openedCountry : (allCountries?.[0]?.name || '')}
         preselectedTripId={matchingTrip?.id}
         itemToEdit={itemToEdit}
       />
