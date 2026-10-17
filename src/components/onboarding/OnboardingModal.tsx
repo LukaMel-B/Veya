@@ -23,6 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { ModalPortal } from '../common/ModalPortal';
+import { CountryPicker } from '../common/CountryPicker';
 
 export const OnboardingModal: React.FC = () => {
   const { isOnboardingOpen, completeOnboarding, userProfile } = useApp();
@@ -33,7 +34,7 @@ export const OnboardingModal: React.FC = () => {
   const [displayName, setDisplayName] = useState(userProfile.displayName || 'Traveler');
   const [avatar, setAvatar] = useState(userProfile.avatar || 'compass');
   const [homeCountry, setHomeCountry] = useState(userProfile.homeCountry || 'India');
-  const [dreamCountry, setDreamCountry] = useState(userProfile.dreamCountry || 'Japan');
+  const [dreamCountry, setDreamCountry] = useState(userProfile.dreamCountry || '');
   const [preferredCurrency, setPreferredCurrency] = useState(userProfile.preferredCurrency || 'INR');
   const [travelStyles, setTravelStyles] = useState<string[]>(
     userProfile.travelStyles?.length ? userProfile.travelStyles : ['Cultural & Heritage', 'Food & Dining']
@@ -51,13 +52,13 @@ export const OnboardingModal: React.FC = () => {
   };
 
   const handleSkip = () => {
-    // Complete with sensible defaults
+    // Complete with sensible defaults - only creates dreamCountry if explicitly chosen
     completeOnboarding(
       {
         displayName: displayName.trim() || 'Traveler',
         avatar,
         homeCountry,
-        dreamCountry: dreamCountry.trim() || 'Japan',
+        dreamCountry: dreamCountry.trim(),
         preferredCurrency,
         travelStyles,
       },
@@ -410,21 +411,11 @@ export const OnboardingModal: React.FC = () => {
                 </p>
 
                 <div style={{ position: 'relative', marginTop: '4px' }}>
-                  <input
-                    type="text"
+                  <CountryPicker
                     value={dreamCountry}
-                    onChange={(e) => setDreamCountry(e.target.value)}
-                    placeholder="e.g. Japan, Switzerland, Iceland, Italy..."
-                    className="input"
-                    style={{
-                      height: '44px',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      borderRadius: '12px',
-                      padding: '0 14px',
-                      backgroundColor: '#FFFFFF',
-                      border: '1px solid var(--stroke)',
-                    }}
+                    onChange={(c) => setDreamCountry(c.name)}
+                    placeholder="Search dream country (e.g. Japan, Switzerland, USA)..."
+                    id="onboarding-dream-country-picker"
                   />
                 </div>
 
@@ -436,7 +427,7 @@ export const OnboardingModal: React.FC = () => {
                       <button
                         key={c}
                         type="button"
-                        onClick={() => setDreamCountry(c)}
+                        onClick={() => setDreamCountry(isSelected ? '' : c)}
                         className={`filter-chip ${isSelected ? 'active' : ''}`}
                         style={{
                           fontSize: '0.72rem',
@@ -458,25 +449,12 @@ export const OnboardingModal: React.FC = () => {
                     <Globe size={11} />
                     <span>Home Country</span>
                   </label>
-                  <select
+                  <CountryPicker
                     value={homeCountry}
-                    onChange={(e) => setHomeCountry(e.target.value)}
-                    className="input"
-                    style={{
-                      height: '44px',
-                      fontSize: '0.84rem',
-                      fontWeight: 600,
-                      borderRadius: '12px',
-                      padding: '0 10px',
-                      backgroundColor: 'var(--surface-neutral-1)',
-                    }}
-                  >
-                    {POPULAR_COUNTRIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(c) => setHomeCountry(c.name)}
+                    placeholder="Search home country..."
+                    id="onboarding-home-country-picker"
+                  />
                 </div>
 
                 <div>

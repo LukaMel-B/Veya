@@ -20,6 +20,7 @@ import type {
   TripGroceryItem,
 } from '../types';
 import { getCountryFlag, getCountryCover, detectCountry } from '../utils/countryUtils';
+import { findCountryByNameOrCode, getCountryFlagEmoji } from '../data/countriesData';
 
 export class TravelNestDatabase extends Dexie {
   trips!: Table<Trip, string>;
@@ -164,30 +165,54 @@ export class TravelNestDatabase extends Dexie {
   }
 
   /**
-   * Ensure and persist a country dossier in IndexedDB (No automatic flags)
+   * Ensure and persist a country dossier in IndexedDB.
+   * Resolves alternate spellings, native names, and codes to canonical ISO country name and code,
+   * completely preventing duplicate folders.
    */
-  async saveCountry(countryName: string, coverImage?: string): Promise<CountryDossier> {
+  async saveCountry(countryName: string, coverImage?: string, countryCode?: string, notes?: string): Promise<CountryDossier> {
     const trimmed = countryName.trim();
     if (!trimmed) throw new Error('Country name is required');
-    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-    const id = formatted.toLowerCase();
 
-    const existing = await this.countries.get(id);
+    const countryInfo = findCountryByNameOrCode(countryCode || trimmed);
+    const canonicalName = countryInfo ? countryInfo.name : (trimmed.charAt(0).toUpperCase() + trimmed.slice(1));
+    const canonicalCode = countryInfo ? countryInfo.code : (countryCode ? countryCode.toUpperCase() : undefined);
+    const canonicalId = canonicalName.toLowerCase();
+    const flag = countryInfo ? countryInfo.flag : getCountryFlagEmoji(canonicalName);
+
+    // Check existing by id, canonical name, or code
+    let existing = await this.countries.get(canonicalId);
+    if (!existing) {
+      existing = await this.countries.where('name').equalsIgnoreCase(canonicalName).first();
+    }
+    if (!existing) {
+      existing = await this.countries.get(trimmed.toLowerCase());
+    }
+
     if (existing) {
-      if (coverImage && coverImage !== existing.coverImage) {
-        await this.countries.update(id, { coverImage });
-        return { ...existing, coverImage };
+      const updates: Partial<CountryDossier> = {};
+      if (coverImage && coverImage !== existing.coverImage) updates.coverImage = coverImage;
+      if (notes !== undefined && notes !== existing.notes) updates.notes = notes;
+      if (canonicalCode && !existing.code) updates.code = canonicalCode;
+      if (flag && (!existing.flag || existing.flag === '🌍')) updates.flag = flag;
+
+      if (Object.keys(updates).length > 0) {
+        updates.updatedAt = new Date().toISOString();
+        await this.countries.update(existing.id, updates);
+        return { ...existing, ...updates };
       }
       return existing;
     }
 
     const dossier: CountryDossier = {
-      id,
-      name: formatted,
-      coverImage: coverImage || getCountryCover(formatted),
+      id: canonicalId,
+      name: canonicalName,
+      code: canonicalCode,
+      flag,
+      coverImage: coverImage || getCountryCover(canonicalName),
+      notes: notes || '',
       createdAt: new Date().toISOString(),
     };
-    await this.countries.add(dossier);
+    await this.countries.put(dossier);
     return dossier;
   }
 
@@ -199,17 +224,34 @@ export class TravelNestDatabase extends Dexie {
   async deleteCountry(countryNameOrId: string, options: { deleteItems?: boolean } = {}): Promise<void> {
     const trimmed = countryNameOrId.trim();
     if (!trimmed) return;
-    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-    const id = formatted.toLowerCase();
+
+    const countryInfo = findCountryByNameOrCode(trimmed);
+    const canonicalName = countryInfo ? countryInfo.name : (trimmed.charAt(0).toUpperCase() + trimmed.slice(1));
+    const canonicalId = canonicalName.toLowerCase();
+    const rawId = trimmed.toLowerCase();
 
     await this.transaction('rw', [this.countries, this.collectionItems], async () => {
-      // 1. Delete the country record
-      await this.countries.delete(id);
-      await this.countries.where('name').equalsIgnoreCase(formatted).delete();
+      // 1. Delete the country record by all known identifiers
+      await this.countries.delete(canonicalId);
+      await this.countries.delete(rawId);
+      await this.countries.where('name').equalsIgnoreCase(canonicalName).delete();
+      await this.countries.where('name').equalsIgnoreCase(trimmed).delete();
+      if (countryInfo?.code) {
+        await this.countries.where('code').equalsIgnoreCase(countryInfo.code).delete();
+      }
 
-      // 2. Handle items assigned to this country
+      // 2. Handle items assigned to this country safely
       const itemsInCountry = await this.collectionItems
-        .filter((item) => (item.country || '').trim().toLowerCase() === formatted.toLowerCase())
+        .filter((item) => {
+          const itemCountry = (item.country || '').trim().toLowerCase();
+          return (
+            itemCountry === canonicalId ||
+            itemCountry === rawId ||
+            itemCountry === canonicalName.toLowerCase() ||
+            itemCountry === trimmed.toLowerCase() ||
+            (Boolean(countryInfo?.code) && itemCountry === countryInfo!.code.toLowerCase())
+          );
+        })
         .toArray();
 
       if (options.deleteItems) {
@@ -489,7 +531,7 @@ export class TravelNestDatabase extends Dexie {
       }
     }
 
-    return this.transaction('rw', [
+    const allTables = [
       this.trips,
       this.places,
       this.collectionItems,
@@ -501,7 +543,15 @@ export class TravelNestDatabase extends Dexie {
       this.countries,
       this.categories,
       this.journalEntries,
-    ], async () => {
+      this.transportLegs,
+      this.recipes,
+      this.baseIngredientPrices,
+      this.tripIngredientOverrides,
+      this.tripMealPlans,
+      this.tripGroceryItems,
+    ].filter(Boolean);
+
+    return this.transaction('rw', allTables, async () => {
       if (mode === 'overwrite') {
         await Promise.all([
           this.trips.clear(),

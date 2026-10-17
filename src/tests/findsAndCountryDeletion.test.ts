@@ -143,6 +143,124 @@ async function runTests() {
   assert(!mockCountryStore.has('norway'), 'Norway country deleted');
   assert(!mockItemStore.has('item-3'), 'Item 3 deleted when deleteItems is true');
 
+  // Test 6: Worldwide ISO 3166-1 Alpha-2 Dataset & Search
+  console.log('\nTest 6: ISO 3166-1 Alpha-2 Dataset Coverage & Offline Search');
+  const { 
+    COUNTRIES_DATA, 
+    searchCountries, 
+    findCountryByNameOrCode, 
+    normalizeCountryName 
+  } = await import('../data/countriesData.ts');
+
+  assert(COUNTRIES_DATA.length >= 240, `Complete worldwide coverage: ${COUNTRIES_DATA.length} countries/territories bundled`);
+  
+  const japanFound = findCountryByNameOrCode('Japan');
+  assert(japanFound?.code === 'JP', 'Japan resolved to ISO code JP');
+  assert(japanFound?.flag === '🇯🇵', 'Japan has correct flag emoji');
+
+  // Search queries
+  const searchSwitz = searchCountries('switz');
+  assert(searchSwitz.some((c) => c.name === 'Switzerland'), 'Search "switz" finds Switzerland');
+
+  // Alternate spellings & aliases
+  const usaSearch = findCountryByNameOrCode('USA');
+  assert(usaSearch?.name === 'United States', 'Alternate spelling "USA" resolves to United States');
+  assert(usaSearch?.code === 'US', 'USA resolves to ISO code US');
+
+  const ukSearch = findCountryByNameOrCode('UK');
+  assert(ukSearch?.name === 'United Kingdom', 'Alternate spelling "UK" resolves to United Kingdom');
+
+  const hollandSearch = findCountryByNameOrCode('Holland');
+  assert(hollandSearch?.name === 'Netherlands', 'Alternate spelling "Holland" resolves to Netherlands');
+
+  const uaeSearch = findCountryByNameOrCode('UAE');
+  assert(uaeSearch?.name === 'United Arab Emirates', 'Alternate spelling "UAE" resolves to United Arab Emirates');
+
+  const normalized = normalizeCountryName('united states of america');
+  assert(normalized === 'United States', 'normalizeCountryName normalizes full aliases to canonical display name');
+
+  // Test 7: Duplicate Folder Prevention with Alternate Spellings
+  console.log('\nTest 7: Duplicate Prevention in saveCountry');
+  const dbCountriesMap = new Map<string, any>();
+  (db.countries as any).get = async (id: string) => dbCountriesMap.get(id.toLowerCase());
+  (db.countries as any).put = async (dossier: any) => { dbCountriesMap.set(dossier.id.toLowerCase(), dossier); };
+  (db.countries as any).update = async (id: string, updates: any) => {
+    const cur = dbCountriesMap.get(id.toLowerCase());
+    if (cur) dbCountriesMap.set(id.toLowerCase(), { ...cur, ...updates });
+  };
+  (db.countries as any).where = (field: string) => ({
+    equalsIgnoreCase: (val: string) => ({
+      first: async () => {
+        for (const v of dbCountriesMap.values()) {
+          if (v[field]?.toLowerCase() === val.toLowerCase()) return v;
+        }
+        return undefined;
+      },
+      delete: async () => {
+        for (const [k, v] of dbCountriesMap.entries()) {
+          if (v[field]?.toLowerCase() === val.toLowerCase()) dbCountriesMap.delete(k);
+        }
+      },
+    }),
+  });
+
+  // Save via alias 'USA'
+  await db.saveCountry('USA');
+  assert(dbCountriesMap.has('united states'), 'Saving "USA" creates canonical "united states" folder');
+  assert(dbCountriesMap.size === 1, 'Exactly 1 country folder exists');
+
+  // Attempt duplicate save via 'United States'
+  await db.saveCountry('United States');
+  assert(dbCountriesMap.size === 1, 'Duplicate save via "United States" does not create second folder');
+
+  // Attempt duplicate save via lowercase 'us'
+  await db.saveCountry('US');
+  assert(dbCountriesMap.size === 1, 'Duplicate save via code "US" does not create second folder');
+
+  // Test 8: Country Folder Detail Editing
+  console.log('\nTest 8: Country Folder Detail Editing');
+  const customCover = 'https://images.unsplash.com/custom-swiss-photo';
+  const customNotes = 'Must visit Lauterbrunnen and ride the Glacier Express';
+  
+  await db.saveCountry('Switzerland', customCover, 'CH', customNotes);
+  const swissDossier = dbCountriesMap.get('switzerland');
+  assert(swissDossier && swissDossier.name === 'Switzerland', 'Switzerland dossier created');
+  assert(swissDossier && swissDossier.coverImage === customCover, 'Custom cover image saved');
+  assert(swissDossier && swissDossier.notes === customNotes, 'Custom destination notes saved');
+  assert(swissDossier && swissDossier.code === 'CH', 'ISO code CH attached');
+
+  // Update Swiss notes
+  const updatedNotes = 'Updated: Lauterbrunnen, Zermatt, and Jungfraujoch';
+  await db.saveCountry('Switzerland', undefined, undefined, updatedNotes);
+  const updatedSwiss = dbCountriesMap.get('switzerland');
+  assert(updatedSwiss.notes === updatedNotes, 'Notes updated without modifying folder identity');
+  assert(updatedSwiss.coverImage === customCover, 'Cover image retained across partial update');
+
+  // Test 9: UI Components & Touch Optimizations
+  console.log('\nTest 9: CountryPicker & EditCountryModal UI Invariants');
+  const countryPickerPath = path.resolve(process.cwd(), 'src/components/common/CountryPicker.tsx');
+  const countryPickerContent = fs.readFileSync(countryPickerPath, 'utf-8');
+  assert(countryPickerContent.includes('touchMoved'), 'CountryPicker includes touch scroll disambiguation');
+  assert(countryPickerContent.includes("minHeight: '44px'"), 'CountryPicker options adhere to 44px touch target');
+  assert(countryPickerContent.includes('country.code'), 'CountryPicker displays ISO 3166-1 alpha-2 code badge');
+
+  const editCountryModalPath = path.resolve(process.cwd(), 'src/components/collection/EditCountryModal.tsx');
+  assert(fs.existsSync(editCountryModalPath), 'EditCountryModal component exists');
+  const editModalContent = fs.readFileSync(editCountryModalPath, 'utf-8');
+  assert(editModalContent.includes('Cover Photo URL'), 'EditCountryModal supports cover photo URL');
+  assert(editModalContent.includes('Curated Photo Presets'), 'EditCountryModal provides curated photo presets');
+  assert(editModalContent.includes('Destination Vision & Notes'), 'EditCountryModal supports destination notes');
+
+  const collectionContent = fs.readFileSync(collectionViewPath, 'utf-8');
+  assert(collectionContent.includes('EditCountryModal'), 'CollectionView imports and renders EditCountryModal');
+  assert(collectionContent.includes('CountryPicker'), 'CollectionView imports and uses CountryPicker');
+  assert(collectionContent.includes('ModalPortal'), 'CollectionView wraps create modal in ModalPortal');
+
+  const onboardingPath = path.resolve(process.cwd(), 'src/components/onboarding/OnboardingModal.tsx');
+  const onboardingContent = fs.readFileSync(onboardingPath, 'utf-8');
+  assert(onboardingContent.includes('CountryPicker'), 'OnboardingModal uses CountryPicker for country selection');
+  assert(onboardingContent.includes("useState(userProfile.dreamCountry || '')"), 'OnboardingModal defaults dreamCountry to empty on fresh install');
+
   console.log(`\n===============================================================`);
   console.log(`FINDS & COUNTRY DELETION TESTS: ${passed} Passed, ${failed} Failed`);
   console.log(`===============================================================\n`);

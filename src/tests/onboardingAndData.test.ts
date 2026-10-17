@@ -14,6 +14,7 @@ const mockLocalStorage = {
 let mockTripCount = 0;
 let mockJournalCount = 0;
 let mockColCount = 0;
+let mockCountryCount = 0;
 let mockAllTrips: any[] = [];
 
 (globalThis as any).indexedDB = {
@@ -45,6 +46,7 @@ import { db } from '../db/database.ts';
 (db.trips as any).toArray = async () => mockAllTrips;
 (db.journalEntries as any).count = async () => mockJournalCount;
 (db.collectionItems as any).count = async () => mockColCount;
+(db.countries as any).count = async () => mockCountryCount;
 
 let passed = 0;
 let failed = 0;
@@ -122,13 +124,24 @@ async function runTests() {
   mockTripCount = 0;
   mockJournalCount = 0;
   mockColCount = 7;
+  mockCountryCount = 0;
   const returningItemsResult = await determineInitialOnboardingStatus();
   assert(returningItemsResult.shouldShowOnboarding === false, 'Existing user with collection items spared from onboarding');
+
+  mockLocalStorage.clear();
+  mockTripCount = 0;
+  mockJournalCount = 0;
+  mockColCount = 0;
+  mockCountryCount = 2;
+  const returningCountriesResult = await determineInitialOnboardingStatus();
+  assert(returningCountriesResult.shouldShowOnboarding === false, 'Existing user with country folders spared from onboarding');
+  assert(returningCountriesResult.isExistingUser === true, 'Existing user with country folders marked isExistingUser = true');
 
   // 5. User who already completed onboarding
   mockLocalStorage.clear();
   mockLocalStorage.setItem(ONBOARDING_COMPLETED_KEY, 'true');
   mockTripCount = 0;
+  mockCountryCount = 0;
   const completedResult = await determineInitialOnboardingStatus();
   assert(completedResult.shouldShowOnboarding === false, 'User with onboarding flag does not repeat onboarding');
 

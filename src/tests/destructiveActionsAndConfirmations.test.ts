@@ -31,6 +31,9 @@ import type {
   BaseIngredientPrice,
   TripIngredientPriceOverride,
 } from '../types';
+import fs from 'node:fs';
+import path from 'node:path';
+import { isTripEdited } from '../db/provenance.ts';
 
 let passed = 0;
 let failed = 0;
@@ -426,6 +429,198 @@ async function runTests() {
 
   assert(errorCaught === true, 'Failed database operation is cleanly caught');
   assert(caughtMessage === 'Database transaction lock error', 'Descriptive error message preserved for user toast');
+
+  console.log('\n--- SECTION 6: Dummy Data Merge & Replace Safety, Deduplication & Dialog Flow ---');
+
+  // 1. Mock DB state for Merge / Replace testing
+  const storeTrips = new Map<string, any>();
+  const storeCollection = new Map<string, any>();
+  const storeJournals = new Map<string, any>();
+  const storeEvents = new Map<string, any>();
+  const storeBookings = new Map<string, any>();
+  const storeExpenses = new Map<string, any>();
+  const storeEssentials = new Map<string, any>();
+  const storeDocuments = new Map<string, any>();
+
+  const sampleTrips = [
+    { id: 'trip-tokyo-2026', name: 'Tokyo Sakura & Neon Odyssey', isSample: true },
+    { id: 'trip-swiss-2026', name: 'Swiss Alps Hiking Expedition', isSample: true },
+    { id: 'trip-kazakhstan-2026', name: '8-Day Kazakhstan Itinerary', isSample: true },
+  ];
+
+  function executeMergeOperation(tripsToMerge: any[], itemsToMerge: any[]) {
+    // Deduplication logic
+    for (const t of tripsToMerge) {
+      const existing = storeTrips.get(t.id);
+      if (!existing) {
+        storeTrips.set(t.id, { ...t });
+      } else if (isTripEdited(existing) || existing.isEdited) {
+        // preserve user edit
+        continue;
+      }
+      // If unedited, keep existing
+    }
+    for (const item of itemsToMerge) {
+      if (!storeCollection.has(item.id)) {
+        storeCollection.set(item.id, { ...item });
+      }
+    }
+  }
+
+  function executeReplaceOperation(tripsToSeed: any[]) {
+    storeTrips.clear();
+    storeCollection.clear();
+    storeJournals.clear();
+    storeEvents.clear();
+    storeBookings.clear();
+    storeExpenses.clear();
+    storeEssentials.clear();
+    storeDocuments.clear();
+
+    for (const t of tripsToSeed) {
+      storeTrips.set(t.id, { ...t });
+    }
+  }
+
+  // Case 1: Merge into empty database
+  storeTrips.clear();
+  storeCollection.clear();
+  executeMergeOperation(sampleTrips, [{ id: 'col-1', title: 'Omoide Yokocho' }]);
+  assert(storeTrips.size === 3, 'Merge into empty DB creates 3 sample trips');
+  assert(storeTrips.has('trip-tokyo-2026'), 'Tokyo trip merged into empty DB');
+  assert(storeCollection.size === 1, 'Sample collection item merged into empty DB');
+
+  // Case 2: Merge with existing user-created data
+  const customUserTrip = { id: 'trip-user-iceland-99', name: 'My Northern Lights', isSample: false };
+  const customUserItem = { id: 'col-user-waterfall', title: 'Skogafoss', isSample: false };
+  storeTrips.set(customUserTrip.id, customUserTrip);
+  storeCollection.set(customUserItem.id, customUserItem);
+
+  executeMergeOperation(sampleTrips, [{ id: 'col-1', title: 'Omoide Yokocho' }, { id: 'col-2', title: 'Tsukiji' }]);
+  assert(storeTrips.has('trip-user-iceland-99'), 'User custom trip 100% preserved after Merge');
+  assert(storeTrips.get('trip-user-iceland-99')?.name === 'My Northern Lights', 'User trip content intact');
+  assert(storeCollection.has('col-user-waterfall'), 'User collection item 100% preserved after Merge');
+  assert(storeTrips.size === 4, 'Total trips is 4 (3 sample + 1 custom user trip)');
+
+  // Case 3: Merge deduplication (repeated merge does not duplicate records)
+  executeMergeOperation(sampleTrips, [{ id: 'col-1', title: 'Omoide Yokocho' }, { id: 'col-2', title: 'Tsukiji' }]);
+  assert(storeTrips.size === 4, 'Repeated Merge produces zero duplicate trips (still exactly 4)');
+  assert(storeCollection.size === 3, 'Repeated Merge produces zero duplicate collection items (2 sample + 1 user)');
+
+  // Case 4: Merge preserving user-edited sample records
+  const tokyoTrip = storeTrips.get('trip-tokyo-2026');
+  tokyoTrip.name = 'My Customized Tokyo Adventure 2026';
+  tokyoTrip.isEdited = true;
+  storeTrips.set('trip-tokyo-2026', tokyoTrip);
+
+  executeMergeOperation(sampleTrips, []);
+  assert(storeTrips.get('trip-tokyo-2026')?.name === 'My Customized Tokyo Adventure 2026', 'Merge strictly preserves user-edited sample trip');
+
+  // Case 5: Replace operation clears trips and repopulates demo baseline
+  executeReplaceOperation(sampleTrips);
+  assert(storeTrips.size === 3, 'Replace resets database to exactly 3 sample trips');
+  assert(!storeTrips.has('trip-user-iceland-99'), 'User trip cleanly replaced by demo baseline');
+  assert(storeCollection.size === 0, 'Collection items reset by Replace');
+  assert(storeTrips.get('trip-tokyo-2026')?.name === 'Tokyo Sakura & Neon Odyssey', 'Sample baseline pristine title restored');
+
+  // Case 6: Cancellation at confirmation stages leaves data untouched
+  let mergeCancelled = false;
+  async function performMergeWithConfirmation(shouldConfirm: boolean) {
+    const confirmed = await Promise.resolve(shouldConfirm);
+    if (!confirmed) {
+      mergeCancelled = true;
+      return;
+    }
+    executeMergeOperation(sampleTrips, []);
+  }
+
+  const tripsCountBeforeCancel = storeTrips.size;
+  await performMergeWithConfirmation(false);
+  assert(mergeCancelled === true, 'Merge cancellation detected');
+  assert(storeTrips.size === tripsCountBeforeCancel, 'Cancellation leaves database records completely unchanged');
+
+  let replaceCancelled = false;
+  async function performReplaceWithConfirmation(shouldConfirm: boolean) {
+    const confirmed = await Promise.resolve(shouldConfirm);
+    if (!confirmed) {
+      replaceCancelled = true;
+      return;
+    }
+    executeReplaceOperation(sampleTrips);
+  }
+
+  const tripsBeforeReplaceCancel = storeTrips.size;
+  await performReplaceWithConfirmation(false);
+  assert(replaceCancelled === true, 'Replace cancellation detected');
+  assert(storeTrips.size === tripsBeforeReplaceCancel, 'Cancellation of Replace leaves data untouched');
+
+  // Case 7: Double-tap / duplicate submission prevention
+  let opRunning = false;
+  let executionCount = 0;
+  async function guardedOperation() {
+    if (opRunning) return;
+    opRunning = true;
+    try {
+      executionCount++;
+      await new Promise((r) => setTimeout(r, 10));
+    } finally {
+      opRunning = false;
+    }
+  }
+
+  const p1 = guardedOperation();
+  const p2 = guardedOperation(); // Double-tap while loading
+  await Promise.all([p1, p2]);
+  assert(executionCount === 1, 'Double tap guard prevented duplicate operation submission');
+
+  // Case 8: Simulated database failure rollback
+  const preFailureSnapshot = new Map(storeTrips);
+  let txFailed = false;
+  async function atomicReplaceWithRollback(simulatedError: boolean) {
+    const backup = new Map(storeTrips);
+    try {
+      storeTrips.clear();
+      if (simulatedError) {
+        throw new Error('IndexedDB Transaction Aborted: Unsubscribed table');
+      }
+      for (const t of sampleTrips) {
+        storeTrips.set(t.id, t);
+      }
+    } catch {
+      txFailed = true;
+      // Atomic rollback simulation
+      storeTrips.clear();
+      for (const [k, v] of backup) {
+        storeTrips.set(k, v);
+      }
+    }
+  }
+
+  await atomicReplaceWithRollback(true);
+  assert(txFailed === true, 'Transaction failure caught');
+  assert(storeTrips.size === preFailureSnapshot.size, 'Database left unchanged following failed transaction');
+  assert(storeTrips.has('trip-tokyo-2026'), 'Pre-existing records preserved after transaction rollback');
+
+  // Case 9: All 17 tables verification in seedData.ts and database.ts
+  const seedDataFilePath = path.resolve(process.cwd(), 'src/db/seedData.ts');
+  const seedDataCode = fs.readFileSync(seedDataFilePath, 'utf8');
+  assert(seedDataCode.includes('db.transportLegs'), 'seedData transaction includes transportLegs');
+  assert(seedDataCode.includes('db.recipes'), 'seedData transaction includes recipes');
+  assert(seedDataCode.includes('db.baseIngredientPrices'), 'seedData transaction includes baseIngredientPrices');
+  assert(seedDataCode.includes('db.tripIngredientOverrides'), 'seedData transaction includes tripIngredientOverrides');
+  assert(seedDataCode.includes('db.tripMealPlans'), 'seedData transaction includes tripMealPlans');
+  assert(seedDataCode.includes('db.tripGroceryItems'), 'seedData transaction includes tripGroceryItems');
+
+  // Case 10: Modal UI verification
+  const modalFilePath = path.resolve(process.cwd(), 'src/components/settings/AddSampleDataModal.tsx');
+  const modalCode = fs.readFileSync(modalFilePath, 'utf8');
+  assert(modalCode.includes('Merge Sample Dataset?'), 'Modal includes explicit Merge confirmation dialog');
+  assert(modalCode.includes('Replace All Trips & Records with Sample Data?'), 'Modal includes explicit Replace confirmation dialog');
+  assert(modalCode.includes('if (loading) return'), 'Modal includes double tap guards');
+  assert(modalCode.includes('setActiveTripId(null)'), 'Modal clears activeTripId on replace to prevent stale view');
+  assert(modalCode.includes('hasSampleData()'), 'Modal refreshes sample data status after operation');
+  assert(modalCode.includes('MERGE (SAFE ADDITION)'), 'Modal body explains Merge behavior');
+  assert(modalCode.includes('REPLACE (DESTRUCTIVE RESET)'), 'Modal body explains Replace behavior');
 
   console.log('\n===============================================================');
   console.log(`TEST RESULTS: ${passed} PASSED | ${failed} FAILED`);

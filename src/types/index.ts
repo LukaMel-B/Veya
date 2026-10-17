@@ -24,9 +24,12 @@ export interface Trip {
 export interface CountryDossier {
   id: string;
   name: string;
+  code?: string;
   flag?: string;
   coverImage?: string;
+  notes?: string;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export type CategoryScope = 'collection' | 'expense' | 'essential';

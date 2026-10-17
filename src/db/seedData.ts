@@ -14,7 +14,8 @@ import type {
   TransportLeg,
   TripMealPlan,
 } from '../types';
-import { detectCountry, getItemEffectiveCountry, normalizeCategory } from '../utils/countryUtils';
+import { detectCountry, getItemEffectiveCountry, normalizeCategory, getCountryCover } from '../utils/countryUtils';
+import { isTripEdited, isJournalEdited, isCollectionItemEdited } from './provenance';
 
 export function getSampleCollectionItems(trip1Id: string = 'trip-tokyo-2026', trip2Id: string = 'trip-swiss-2026'): CollectionItem[] {
   const items: CollectionItem[] = [
@@ -325,6 +326,31 @@ export async function hasSampleData(): Promise<{
   };
 }
 
+export const DEFAULT_CATEGORIES: Array<{ label: string; icon: string; scope: 'collection' | 'expense' | 'essential' }> = [
+  { label: 'Food & Cafes', icon: '🍽️', scope: 'collection' },
+  { label: 'Places & Sights', icon: '📍', scope: 'collection' },
+  { label: 'Stays & Hotels', icon: '🏨', scope: 'collection' },
+  { label: 'Activities & Fun', icon: '🎟️', scope: 'collection' },
+  { label: 'Shopping & Markets', icon: '🛍️', scope: 'collection' },
+  { label: 'Transport & Passes', icon: '🚆', scope: 'collection' },
+  { label: 'Tips & Notes', icon: '📝', scope: 'collection' },
+  { label: 'Flights', icon: '✈️', scope: 'expense' },
+  { label: 'Stay', icon: '🏨', scope: 'expense' },
+  { label: 'Food', icon: '🍽️', scope: 'expense' },
+  { label: 'Transit', icon: '🚆', scope: 'expense' },
+  { label: 'Activity', icon: '🎟️', scope: 'expense' },
+  { label: 'Shopping', icon: '🛍️', scope: 'expense' },
+  { label: 'Insurance', icon: '📄', scope: 'expense' },
+  { label: 'Other', icon: '✨', scope: 'expense' },
+  { label: 'Clothing', icon: '👕', scope: 'essential' },
+  { label: 'Electronics', icon: '🔌', scope: 'essential' },
+  { label: 'Toiletries', icon: '🧴', scope: 'essential' },
+  { label: 'Documents', icon: '🛂', scope: 'essential' },
+  { label: 'Health', icon: '💊', scope: 'essential' },
+  { label: 'Money', icon: '💳', scope: 'essential' },
+  { label: 'General', icon: '🎒', scope: 'essential' },
+];
+
 /**
  * Startup initialization: Ensures default categories and countries exist.
  * NEVER seeds sample trips, events, expenses, or journals automatically.
@@ -365,31 +391,7 @@ export async function seedInitialDataIfEmpty() {
     }
 
     // 1b. Ensure default categories exist in categories table
-    const defaultCategories: Array<{ label: string; icon: string; scope: 'collection' | 'expense' | 'essential' }> = [
-      { label: 'Food & Cafes', icon: '🍽️', scope: 'collection' },
-      { label: 'Places & Sights', icon: '📍', scope: 'collection' },
-      { label: 'Stays & Hotels', icon: '🏨', scope: 'collection' },
-      { label: 'Activities & Fun', icon: '🎟️', scope: 'collection' },
-      { label: 'Shopping & Markets', icon: '🛍️', scope: 'collection' },
-      { label: 'Transport & Passes', icon: '🚆', scope: 'collection' },
-      { label: 'Tips & Notes', icon: '📝', scope: 'collection' },
-      { label: 'Flights', icon: '✈️', scope: 'expense' },
-      { label: 'Stay', icon: '🏨', scope: 'expense' },
-      { label: 'Food', icon: '🍽️', scope: 'expense' },
-      { label: 'Transit', icon: '🚆', scope: 'expense' },
-      { label: 'Activity', icon: '🎟️', scope: 'expense' },
-      { label: 'Shopping', icon: '🛍️', scope: 'expense' },
-      { label: 'Insurance', icon: '📄', scope: 'expense' },
-      { label: 'Other', icon: '✨', scope: 'expense' },
-      { label: 'Clothing', icon: '👕', scope: 'essential' },
-      { label: 'Electronics', icon: '🔌', scope: 'essential' },
-      { label: 'Toiletries', icon: '🧴', scope: 'essential' },
-      { label: 'Documents', icon: '🛂', scope: 'essential' },
-      { label: 'Health', icon: '💊', scope: 'essential' },
-      { label: 'Money', icon: '💳', scope: 'essential' },
-      { label: 'General', icon: '🎒', scope: 'essential' },
-    ];
-    for (const cat of defaultCategories) {
+    for (const cat of DEFAULT_CATEGORIES) {
       await db.saveCategory(cat.label, cat.icon, cat.scope);
     }
 
@@ -982,7 +984,7 @@ export async function seedSampleData(mode: 'replace' | 'merge' = 'replace') {
 
   const journals = getSampleJournalEntries(trip1Id, trip2Id);
 
-  await db.transaction('rw', [
+  const allTables = [
     db.trips,
     db.places,
     db.collectionItems,
@@ -994,36 +996,212 @@ export async function seedSampleData(mode: 'replace' | 'merge' = 'replace') {
     db.countries,
     db.categories,
     db.journalEntries,
-  ], async () => {
+    db.transportLegs,
+    db.recipes,
+    db.baseIngredientPrices,
+    db.tripIngredientOverrides,
+    db.tripMealPlans,
+    db.tripGroceryItems,
+  ].filter(Boolean);
+
+  await db.transaction('rw', allTables, async () => {
     if (mode === 'replace') {
       await db.clearAll();
-    }
-    const taggedTrips = trips.map((t) => ({ ...t, isSample: true }));
-    const taggedPlaces = places.map((p) => ({ ...p, isSample: true }));
-    const taggedCollectionItems = collectionItems.map((c) => ({ ...c, isSample: true }));
-    const taggedEvents = itineraryEvents.map((e) => ({ ...e, isSample: true }));
-    const taggedBookings = bookings.map((b) => ({ ...b, isSample: true }));
-    const taggedExpenses = expenses.map((e) => ({ ...e, isSample: true }));
-    const taggedEssentials = essentials.map((ess) => ({ ...ess, isSample: true }));
-    const taggedDocuments = documents.map((d) => ({ ...d, isSample: true }));
-    const taggedJournals = journals.map((j) => ({ ...j, isSample: true }));
 
-    await db.trips.bulkPut(taggedTrips);
-    await db.places.bulkPut(taggedPlaces);
-    await db.collectionItems.bulkPut(taggedCollectionItems);
-    await db.itineraryEvents.bulkPut(taggedEvents);
-    await db.bookings.bulkPut(taggedBookings);
-    await db.expenses.bulkPut(taggedExpenses);
-    await db.essentials.bulkPut(taggedEssentials);
-    await db.documents.bulkPut(taggedDocuments);
-    await db.journalEntries.bulkPut(taggedJournals);
+      const taggedTrips = trips.map((t) => ({ ...t, isSample: true }));
+      const taggedPlaces = places.map((p) => ({ ...p, isSample: true }));
+      const taggedCollectionItems = collectionItems.map((c) => ({ ...c, isSample: true }));
+      const taggedEvents = itineraryEvents.map((e) => ({ ...e, isSample: true }));
+      const taggedBookings = bookings.map((b) => ({ ...b, isSample: true }));
+      const taggedExpenses = expenses.map((e) => ({ ...e, isSample: true }));
+      const taggedEssentials = essentials.map((ess) => ({ ...ess, isSample: true }));
+      const taggedDocuments = documents.map((d) => ({ ...d, isSample: true }));
+      const taggedJournals = journals.map((j) => ({ ...j, isSample: true }));
 
-    try {
+      await db.trips.bulkPut(taggedTrips);
+      await db.places.bulkPut(taggedPlaces);
+      await db.collectionItems.bulkPut(taggedCollectionItems);
+      await db.itineraryEvents.bulkPut(taggedEvents);
+      await db.bookings.bulkPut(taggedBookings);
+      await db.expenses.bulkPut(taggedExpenses);
+      await db.essentials.bulkPut(taggedEssentials);
+      await db.documents.bulkPut(taggedDocuments);
+      await db.journalEntries.bulkPut(taggedJournals);
+
       if (db.recipes) await db.recipes.bulkPut(getSampleRecipes());
       if (db.baseIngredientPrices) await db.baseIngredientPrices.bulkPut(getSampleBaseIngredientPrices());
       if (db.transportLegs) await db.transportLegs.bulkPut(getSampleTransportLegs(trip1Id));
-    } catch {
-      // Safe in test environments
+
+      // Re-populate country dossiers for sample trips
+      const sampleCountries = [
+        { id: 'japan', name: 'Japan', coverImage: getCountryCover('Japan'), createdAt: new Date().toISOString() },
+        { id: 'switzerland', name: 'Switzerland', coverImage: getCountryCover('Switzerland'), createdAt: new Date().toISOString() },
+        { id: 'kazakhstan', name: 'Kazakhstan', coverImage: getCountryCover('Kazakhstan'), createdAt: new Date().toISOString() },
+      ];
+      await db.countries.bulkPut(sampleCountries);
+
+      // Re-populate default categories
+      for (const cat of DEFAULT_CATEGORIES) {
+        const id = cat.label.trim().toLowerCase().replace(/\s+/g, '-');
+        await db.categories.put({
+          id,
+          label: cat.label,
+          icon: cat.icon,
+          scope: cat.scope,
+          createdAt: new Date().toISOString(),
+        });
+      }
+    } else {
+      // mode === 'merge'
+      // Deduplicate sample records & strictly preserve user modifications
+
+      // 1. Trips: Check if trip exists. If edited by user, KEEP user version. If missing, insert sample.
+      const existingTrips = await db.trips.toArray();
+      const existingTripMap = new Map(existingTrips.map((t) => [t.id, t]));
+      const tripsToPut: Trip[] = [];
+      for (const t of trips) {
+        const existing = existingTripMap.get(t.id);
+        if (!existing) {
+          tripsToPut.push({ ...t, isSample: true });
+        } else if (isTripEdited(existing) || existing.isEdited === true) {
+          // Keep user modifications
+          continue;
+        }
+      }
+      if (tripsToPut.length > 0) {
+        await db.trips.bulkPut(tripsToPut);
+      }
+
+      // 2. Places: Deduplicate by ID
+      const existingPlaces = await db.places.toArray();
+      const existingPlaceIds = new Set(existingPlaces.map((p) => p.id));
+      const placesToPut = places.filter((p) => !existingPlaceIds.has(p.id)).map((p) => ({ ...p, isSample: true }));
+      if (placesToPut.length > 0) {
+        await db.places.bulkPut(placesToPut);
+      }
+
+      // 3. Collection Items (Finds): Deduplicate & preserve user modifications
+      const existingItems = await db.collectionItems.toArray();
+      const existingItemMap = new Map(existingItems.map((c) => [c.id, c]));
+      const itemsToPut: CollectionItem[] = [];
+      for (const c of collectionItems) {
+        const existing = existingItemMap.get(c.id);
+        if (!existing) {
+          itemsToPut.push({ ...c, isSample: true });
+        } else if (isCollectionItemEdited(existing) || existing.isEdited === true) {
+          // Keep user modifications
+          continue;
+        }
+      }
+      if (itemsToPut.length > 0) {
+        await db.collectionItems.bulkPut(itemsToPut);
+      }
+
+      // 4. Itinerary Events: Deduplicate by ID
+      const existingEvents = await db.itineraryEvents.toArray();
+      const existingEventIds = new Set(existingEvents.map((e) => e.id));
+      const eventsToPut = itineraryEvents.filter((e) => !existingEventIds.has(e.id)).map((e) => ({ ...e, isSample: true }));
+      if (eventsToPut.length > 0) {
+        await db.itineraryEvents.bulkPut(eventsToPut);
+      }
+
+      // 5. Bookings: Deduplicate by ID
+      const existingBookings = await db.bookings.toArray();
+      const existingBookingIds = new Set(existingBookings.map((b) => b.id));
+      const bookingsToPut = bookings.filter((b) => !existingBookingIds.has(b.id)).map((b) => ({ ...b, isSample: true }));
+      if (bookingsToPut.length > 0) {
+        await db.bookings.bulkPut(bookingsToPut);
+      }
+
+      // 6. Expenses: Deduplicate by ID
+      const existingExpenses = await db.expenses.toArray();
+      const existingExpenseIds = new Set(existingExpenses.map((exp) => exp.id));
+      const expensesToPut = expenses.filter((exp) => !existingExpenseIds.has(exp.id)).map((exp) => ({ ...exp, isSample: true }));
+      if (expensesToPut.length > 0) {
+        await db.expenses.bulkPut(expensesToPut);
+      }
+
+      // 7. Essentials: Deduplicate by ID
+      const existingEssentials = await db.essentials.toArray();
+      const existingEssentialIds = new Set(existingEssentials.map((ess) => ess.id));
+      const essentialsToPut = essentials.filter((ess) => !existingEssentialIds.has(ess.id)).map((ess) => ({ ...ess, isSample: true }));
+      if (essentialsToPut.length > 0) {
+        await db.essentials.bulkPut(essentialsToPut);
+      }
+
+      // 8. Documents: Deduplicate by ID
+      const existingDocuments = await db.documents.toArray();
+      const existingDocIds = new Set(existingDocuments.map((d) => d.id));
+      const docsToPut = documents.filter((d) => !existingDocIds.has(d.id)).map((d) => ({ ...d, isSample: true }));
+      if (docsToPut.length > 0) {
+        await db.documents.bulkPut(docsToPut);
+      }
+
+      // 9. Journals: Deduplicate & preserve user modifications
+      const existingJournals = await db.journalEntries.toArray();
+      const existingJournalMap = new Map(existingJournals.map((j) => [j.id, j]));
+      const journalsToPut: JournalEntry[] = [];
+      for (const j of journals) {
+        const existing = existingJournalMap.get(j.id);
+        if (!existing) {
+          journalsToPut.push({ ...j, isSample: true });
+        } else if (isJournalEdited(existing) || existing.isEdited === true) {
+          // Keep user modifications
+          continue;
+        }
+      }
+      if (journalsToPut.length > 0) {
+        await db.journalEntries.bulkPut(journalsToPut);
+      }
+
+      // 10. Companion tables (recipes, baseIngredientPrices, transportLegs): Deduplicate by ID
+      if (db.recipes) {
+        const existingRecipes = await db.recipes.toArray();
+        const existingRecipeIds = new Set(existingRecipes.map((r) => r.id));
+        const recipesToPut = getSampleRecipes().filter((r) => !existingRecipeIds.has(r.id));
+        if (recipesToPut.length > 0) await db.recipes.bulkPut(recipesToPut);
+      }
+      if (db.baseIngredientPrices) {
+        const existingPrices = await db.baseIngredientPrices.toArray();
+        const existingPriceIds = new Set(existingPrices.map((p) => p.id));
+        const pricesToPut = getSampleBaseIngredientPrices().filter((p) => !existingPriceIds.has(p.id));
+        if (pricesToPut.length > 0) await db.baseIngredientPrices.bulkPut(pricesToPut);
+      }
+      if (db.transportLegs) {
+        const existingLegs = await db.transportLegs.toArray();
+        const existingLegIds = new Set(existingLegs.map((l) => l.id));
+        const legsToPut = getSampleTransportLegs(trip1Id).filter((l) => !existingLegIds.has(l.id));
+        if (legsToPut.length > 0) await db.transportLegs.bulkPut(legsToPut);
+      }
+
+      // Country folders: Ensure sample countries exist without overwriting
+      for (const countryName of ['Japan', 'Switzerland', 'Kazakhstan']) {
+        const cId = countryName.toLowerCase();
+        const existingCountry = await db.countries.get(cId);
+        if (!existingCountry) {
+          await db.countries.put({
+            id: cId,
+            name: countryName,
+            coverImage: getCountryCover(countryName),
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      // Categories: Ensure default categories exist without overwriting
+      for (const cat of DEFAULT_CATEGORIES) {
+        const id = cat.label.trim().toLowerCase().replace(/\s+/g, '-');
+        const existingCat = await db.categories.get(id);
+        if (!existingCat) {
+          await db.categories.put({
+            id,
+            label: cat.label,
+            icon: cat.icon,
+            scope: cat.scope,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      }
     }
   });
 }

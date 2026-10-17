@@ -1411,9 +1411,64 @@ Database schema version 7 introduces 6 new IndexedDB stores:
     * Settings & Backup: database restore in `SettingsView.tsx`, sample data replacement in `AddSampleDataModal.tsx`, dummy data removal in `RemoveSampleDataModal.tsx`, and overwrite imports in `RecordExchangeModal.tsx`.
   * Added unsaved edits guard sheets (`isDirty` + `showConfirm`) to prevent accidental data loss in `QuickAddModal.tsx`, `EditTripModal.tsx`, `SaveItemModal.tsx`, `JournalEntryModal.tsx`, `EditRecipeModal.tsx`, `EditTransportLegModal.tsx`, `MealPlanModal.tsx`, and `EditProfileModal.tsx`.
   * Guaranteed data protection invariants: deleting a trip cascade-deletes only trip-owned records while strictly preserving global places, collection items/finds, journal entries/memories, reusable recipes, and base ingredient prices.
-* [x] **Automated Test Suite (58 Assertions) & Build Verification:**
-  * Created `src/tests/destructiveActionsAndConfirmations.test.ts` covering dialog resolution promises, trip cascade deletion, finds/country deletion, unsaved dirty state calculations, and error resilience.
-  * Added to `package.json` test script; all 9 test suites pass cleanly (100% pass rate, 400+ assertions).
+* [x] **Automated Test Suite (93 Assertions) & Build Verification:**
+  * Created and expanded `src/tests/destructiveActionsAndConfirmations.test.ts` covering dialog resolution promises, trip cascade deletion, finds/country deletion, unsaved dirty state calculations, and error resilience.
+  * Added Section 6 covering Add Dummy Data Merge and Replace workflows: empty DB initialization, preservation of custom user data, deduplication across repeated merges, preservation of user-edited sample records, atomic replace scope, confirmation cancellation at both stages, double-tap prevention, and transaction rollback resilience.
+  * Added to `package.json` test script; all 9 test suites pass cleanly (100% pass rate, 435+ assertions).
   * Production bundle built successfully (`npm run build`): Zero TypeScript or bundling errors.
   * Synchronized native Capacitor assets for iOS and Android (`npm run cap:sync`).
+
+### Release 2.4.2 Checklist (Repaired Add Dummy Data Merge & Replace for iPhone / iOS PWA)
+* [x] **Root Cause Resolution for Replace Action Failure:**
+  * Identified silent `TableNotSubscribedError` in Dexie when `seedSampleData('replace')` called `db.clearAll()` and attempted to clear/seed version 7 companion tables (`transportLegs`, `recipes`, `baseIngredientPrices`, `tripIngredientOverrides`, `tripMealPlans`, `tripGroceryItems`) which were not declared in the transaction scope `[db.trips, ...]`.
+  * Updated `db.transaction('rw', allTables, ...)` in both `seedSampleData` (`seedData.ts`) and `importFullData` (`database.ts`) to subscribe all 17 tables, ensuring fully atomic, rollback-safe transactions.
+* [x] **Merge Workflow (Safe In-App Confirmation & Deduplication):**
+  * Added custom in-app confirmation dialog (`showConfirm`) to Merge explaining that sample data (Tokyo, Swiss Alps, Kazakhstan) will be added alongside existing data without replacing custom records.
+  * Provided clearly labelled Cancel and Confirm actions; Cancel safely closes the dialog with zero data mutations.
+  * Implemented reliable record-level deduplication: checks existing IDs across all stores, preserving existing sample records without duplication, and strictly preserving any user edits (`isTripEdited`, `isJournalEdited`, `isCollectionItemEdited`).
+  * Shows toast feedback upon completion and refreshes `hasSampleData()` status.
+* [x] **Replace Workflow (Transparent Scope & Explicit 2nd Confirmation):**
+  * Updated initial modal body (`AddSampleDataModal.tsx`) with side-by-side comparison cards explaining the precise difference between Safe Merge and Destructive Replace.
+  * Triggering Replace opens a second, explicit confirmation dialog (`showConfirm` with `variant: 'destructive'`, category kicker `DESTRUCTIVE REPLACEMENT`) detailing the exact replacement scope: overwrites all trips, itinerary events, places, finds, bookings, expenses, essentials, documents, and journals with the demo baseline.
+  * Explicitly clarifies that user profile identity (`travelnest_user_profile`), onboarding status, and app settings are preserved.
+  * Cancelling at either stage leaves existing database records 100% untouched.
+  * Upon successful replacement, resets `activeTripId(null)` to prevent orphaned trip views, refreshes sample data status, shows success toast, and closes the modal.
+* [x] **iPhone & iOS PWA Requirements:**
+  * Ensured modal and dialog components use visual viewport positioning and respect iPhone safe areas (`env(safe-area-inset-*)`).
+  * Applied minimum 44px tap targets (`minHeight: '44px'`, `touchAction: 'manipulation'`) across all modal and dialog action buttons.
+  * Implemented double-tap prevention guards (`if (loading) return;` and `disabled={loading}`) on all interactive actions.
+
+### Release 2.8.0 Checklist (Dream Country Setup & Country Folder Management — iPhone / iOS PWA)
+* [x] **First-Install Dream Country Isolation:**
+  * Fresh installations seed *only* the user's chosen Dream Country folder during first-time onboarding via `completeOnboarding`.
+  * Removed hardcoded `'Japan'` fallback in `OnboardingModal.tsx` (`useState(userProfile.dreamCountry || '')`); if no dream country is selected, zero country folders are created.
+  * Completely eliminated preset, example, or unwanted country folders during startup initialization in `seedInitialDataIfEmpty()`.
+  * Dream Country folder is initialized once upon onboarding completion and is *never* recreated on subsequent app launches.
+  * Enhanced existing user detection in `determineInitialOnboardingStatus()` to inspect `db.countries.count() > 0`, ensuring existing users who only created country folders are recognized and protected from repeated onboarding prompts without database resets.
+* [x] **Bundled Worldwide ISO 3166-1 Alpha-2 Dataset (`countriesData.ts`):**
+  * Bundled complete worldwide dataset of 248 countries and territories locally, ensuring 100% offline availability with zero remote lookups or paid APIs.
+  * Documented official data source (ISO 3166-1 Standard & UN Statistics Division M49), version, and Public Domain / CC0 equivalent attribution.
+  * Included canonical English names, native Unicode flag emojis (computed via Regional Indicator Symbol pairs), ISO 3166-1 alpha-2 uppercase codes, and comprehensive alternate spellings / aliases (e.g., "USA", "United States of America", "US" -> United States; "UK", "Great Britain", "England" -> United Kingdom; "Holland" -> Netherlands; "UAE", "Emirates", "Dubai" -> United Arab Emirates).
+  * Provided normalized search utilities (`searchCountries`, `findCountryByNameOrCode`, `normalizeCountryName`) with diacritics stripping.
+* [x] **Touch-Optimized Searchable CountryPicker (`CountryPicker.tsx`):**
+  * Accessible, touch-first searchable dropdown component designed for iPhone, iOS Safari, and standalone PWA.
+  * Implemented touch scroll disambiguation (`onTouchStart` records clientY, `onTouchMove` sets `touchMoved` if delta > 6px), preventing accidental selection while scrolling search results.
+  * Adheres to Apple Human Interface Guidelines with minimum 44px tap targets (`minHeight: '44px'`, `touchAction: 'manipulation'`).
+  * Features ISO 3166-1 alpha-2 monospace code badges, flag emojis, and alternate spelling match indicators.
+  * Viewport and keyboard awareness: uses `scrollIntoView({ behavior: 'smooth', block: 'nearest' })` on focus to keep input and dropdown visible above the iOS on-screen keyboard.
+  * Clean outside-click and outside-tap dismiss listener on both `mousedown` and `touchstart`.
+  * Embedded in `OnboardingModal.tsx` for both Dream Country and Home Country selection, and in `CollectionView.tsx` for new folder creation.
+* [x] **Comprehensive Country Folder Management in Finds (`CollectionView.tsx`):**
+  * **Create Folder:** Creates folder from valid selection with deduplication check. If folder already exists, smoothly alerts traveler and navigates directly into the existing folder instead of duplicating.
+  * **Open & View Contents:** Opens folder gallery filtered to that destination with tag and category filtering.
+  * **Edit Folder Details (`EditCountryModal.tsx`):** New modal enabling travelers to customize folder cover photos (via custom image URL or curated travel presets) and record destination vision and notes.
+  * **Safe Deletion with Custom Confirmation:** Uses Veya's light-themed `showConfirm` dialog explaining that folder contents will be safely preserved in All Saved Finds.
+  * **Safe Item Detachment:** `db.deleteCountry()` atomic transaction safely detaches linked collection items to `country: 'General'`, preserving all field notes, photos, ratings, URLs, and tags. Global places, trips, and journals are strictly untouched.
+  * **Double-Tap Guards:** Added `isSubmittingCountry` and `isDeletingCountry` locks to prevent duplicate submissions from rapid repeated taps.
+* [x] **Automated Test Suite (100% Pass Rate):**
+  * Extended `findsAndCountryDeletion.test.ts` to test ISO dataset coverage (248 countries/territories), search and alias resolution, duplicate prevention in `db.saveCountry()`, folder editing, and UI component invariants.
+  * Verified all 9 test suites pass cleanly (51 tests in finds/country deletion, 93 in destructive actions, 450+ total assertions).
+  * Production bundle compiled with zero errors (`npm run build`).
+  * Synchronized native iOS assets (`npm run cap:sync`).
+
 

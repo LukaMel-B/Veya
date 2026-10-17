@@ -63,8 +63,11 @@ const COUNTRY_COVERS: Record<string, string> = {
   general: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=600&q=80',
 };
 
-export function getCountryFlag(_country?: string): string {
-  return '';
+import { getCountryFlagEmoji, findCountryByNameOrCode, normalizeCountryName } from '../data/countriesData';
+
+export function getCountryFlag(country?: string): string {
+  if (!country || typeof country !== 'string') return '';
+  return getCountryFlagEmoji(country);
 }
 
 export function getCountryCover(country?: string): string {
@@ -81,21 +84,28 @@ export function detectCountry(destinationOrName?: string): string {
   const trimmed = destinationOrName.trim();
   if (!trimmed) return 'General';
 
-  // Check known country keys
+  // 1. If comma separated, check last token (e.g. "Tokyo & Kyoto, Japan" -> "Japan")
+  if (trimmed.includes(',')) {
+    const parts = trimmed.split(',');
+    const lastPart = parts[parts.length - 1].trim();
+    const foundLast = findCountryByNameOrCode(lastPart);
+    if (foundLast) return foundLast.name;
+    if (lastPart.length > 1) {
+      return lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
+    }
+  }
+
+  // 2. Direct match against complete ISO countries dataset
+  const direct = findCountryByNameOrCode(trimmed);
+  if (direct) return direct.name;
+
+  // 3. Check known country keys
   for (const countryKey of Object.keys(COUNTRY_FLAGS)) {
     if (countryKey === 'general' || countryKey === 'usa' || countryKey === 'uk') continue;
     const regex = new RegExp(`\\b${countryKey}\\b`, 'i');
     if (regex.test(trimmed)) {
-      return countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
-    }
-  }
-
-  // If comma separated, check last token (e.g. "Reykjavik, Iceland" -> "Iceland")
-  if (trimmed.includes(',')) {
-    const parts = trimmed.split(',');
-    const lastPart = parts[parts.length - 1].trim();
-    if (lastPart.length > 1) {
-      return lastPart.charAt(0).toUpperCase() + lastPart.slice(1);
+      const found = findCountryByNameOrCode(countryKey);
+      return found ? found.name : countryKey.charAt(0).toUpperCase() + countryKey.slice(1);
     }
   }
 

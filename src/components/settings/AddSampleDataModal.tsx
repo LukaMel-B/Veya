@@ -20,7 +20,7 @@ interface AddSampleDataModalProps {
 }
 
 export const AddSampleDataModal: React.FC<AddSampleDataModalProps> = ({ isOpen, onClose }) => {
-  const { showToast, showConfirm } = useApp();
+  const { showToast, showConfirm, setActiveTripId } = useApp();
   const [loading, setLoading] = useState(false);
   const [sampleStatus, setSampleStatus] = useState<{
     hasSampleTrips: boolean;
@@ -37,36 +37,65 @@ export const AddSampleDataModal: React.FC<AddSampleDataModalProps> = ({ isOpen, 
   if (!isOpen) return null;
 
   const handleMerge = async () => {
+    if (loading) return;
+
+    const confirmed = await showConfirm({
+      title: 'Merge Sample Dataset?',
+      categoryKicker: 'SAFE MERGE',
+      iconName: 'database',
+      variant: 'default',
+      description:
+        'Sample trips (Tokyo, Swiss Alps, Kazakhstan), itinerary spots, bookings, documents, and memories will be added alongside your existing data.',
+      warningMessage:
+        'Your existing trips, saved finds, and settings will remain completely intact. Duplicate sample records will be prevented.',
+      confirmText: 'Merge Data',
+      cancelText: 'Cancel',
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
     setLoading(true);
     try {
       await seedSampleData('merge');
-      showToast('Sample dataset loaded! (Your custom records are preserved)', 'success');
+      const updated = await hasSampleData();
+      setSampleStatus(updated);
+      showToast('Sample dataset merged successfully! Your custom records were preserved.', 'success');
       onClose();
     } catch (err: any) {
-      showToast('Error seeding demo data: ' + err.message, 'error');
+      showToast('Error merging sample data: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleReplace = async () => {
+    if (loading) return;
+
     const confirmed = await showConfirm({
-      title: 'Replace Current Data with Demo Dataset?',
-      categoryKicker: 'DESTRUCTIVE RESET',
-      description:
-        'Are you sure you want to replace existing data with the demo dataset? Any custom trips or memories will be overwritten.',
-      warningMessage: 'This action will reset your active trips to the curated demo collection.',
-      confirmText: 'Replace Data',
-      cancelText: 'Keep Existing',
-      variant: 'destructive',
+      title: 'Replace All Trips & Records with Sample Data?',
+      categoryKicker: 'DESTRUCTIVE REPLACEMENT',
       iconName: 'trash',
+      variant: 'destructive',
+      description:
+        'Are you sure you want to replace all current records? All existing trips, itinerary events, places, finds, bookings, expenses, essentials, documents, and journals will be permanently removed and replaced with the demo baseline.',
+      warningMessage:
+        'Warning: This action permanently removes any custom trips, finds, or records you have created. User profile and app preferences will be preserved.',
+      confirmText: 'Replace All Data',
+      cancelText: 'Keep Existing',
     });
+
     if (!confirmed) {
       return;
     }
+
     setLoading(true);
     try {
       await seedSampleData('replace');
+      setActiveTripId(null);
+      const updated = await hasSampleData();
+      setSampleStatus(updated);
       showToast('Database reset and repopulated with sample dataset.', 'success');
       onClose();
     } catch (err: any) {
@@ -253,9 +282,44 @@ export const AddSampleDataModal: React.FC<AddSampleDataModalProps> = ({ isOpen, 
             </div>
           </div>
 
-          <p style={{ fontSize: '0.78rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.45 }}>
-            Choose how you want to add this dataset: <strong>Merge</strong> keeps your custom records safe, while <strong>Replace</strong> resets all tables back to the demo baseline.
-          </p>
+          {/* Comparison Cards: Merge vs Replace */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div
+              style={{
+                backgroundColor: 'var(--surface-neutral-1)',
+                border: '1px solid var(--stroke)',
+                borderRadius: '12px',
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', letterSpacing: '0.04em' }}>
+                  MERGE (SAFE ADDITION)
+                </span>
+              </div>
+              <p style={{ fontSize: '0.78rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.4 }}>
+                Adds Tokyo, Swiss Alps, and Kazakhstan trips alongside your library. Your custom trips, finds, notes, and photos remain completely safe. Duplicate sample records are prevented.
+              </p>
+            </div>
+
+            <div
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.04)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '12px',
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', letterSpacing: '0.04em' }}>
+                  REPLACE (DESTRUCTIVE RESET)
+                </span>
+              </div>
+              <p style={{ fontSize: '0.78rem', color: '#991b1b', margin: 0, lineHeight: 1.4 }}>
+                Permanently replaces all trips, itinerary events, places, finds, bookings, expenses, essentials, documents, and journals with the pristine demo baseline. (Profile & preferences preserved).
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Footer Actions */}
@@ -273,9 +337,14 @@ export const AddSampleDataModal: React.FC<AddSampleDataModalProps> = ({ isOpen, 
             onClick={handleMerge}
             disabled={loading}
             className="btn btn-primary"
-            style={{ minHeight: '44px', borderRadius: '9999px', fontSize: '0.86rem' }}
+            style={{
+              minHeight: '44px',
+              borderRadius: '9999px',
+              fontSize: '0.86rem',
+              touchAction: 'manipulation',
+            }}
           >
-            {loading ? 'Populating...' : 'Merge Demo Data (Keep My Records)'}
+            {loading ? 'Processing...' : 'Merge Demo Data (Keep My Records)'}
           </button>
 
           <button
@@ -283,13 +352,16 @@ export const AddSampleDataModal: React.FC<AddSampleDataModalProps> = ({ isOpen, 
             disabled={loading}
             className="btn btn-ghost"
             style={{
-              minHeight: '38px',
+              minHeight: '44px',
               borderRadius: '9999px',
-              fontSize: '0.8rem',
-              color: 'var(--secondary)',
+              fontSize: '0.82rem',
+              color: '#dc2626',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              backgroundColor: 'rgba(239, 68, 68, 0.05)',
+              touchAction: 'manipulation',
             }}
           >
-            Replace All With Demo Dataset
+            {loading ? 'Processing...' : 'Replace All With Demo Dataset'}
           </button>
         </div>
       </div>

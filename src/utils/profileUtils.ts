@@ -147,13 +147,14 @@ export async function determineInitialOnboardingStatus(): Promise<{
   }
 
   try {
-    const [tripCount, journalCount, colCount] = await Promise.all([
+    const [tripCount, journalCount, colCount, countryCount] = await Promise.all([
       db.trips.count(),
       db.journalEntries.count(),
       db.collectionItems.count(),
+      db.countries.count(),
     ]);
 
-    const hasData = tripCount > 0 || journalCount > 0 || colCount > 0;
+    const hasData = tripCount > 0 || journalCount > 0 || colCount > 0 || countryCount > 0;
     if (hasData) {
       // Existing installation: preserve everything and mark onboarding as complete
       saveStoredUserProfile({ onboardingCompleted: true });

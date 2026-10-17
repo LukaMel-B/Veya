@@ -13,6 +13,10 @@ import {
   normalizeCategory,
 } from '../../utils/countryUtils';
 import { SaveItemModal } from './SaveItemModal';
+import { EditCountryModal } from './EditCountryModal';
+import { CountryPicker } from '../common/CountryPicker';
+import { ModalPortal } from '../common/ModalPortal';
+import { findCountryByNameOrCode, type CountryData } from '../../data/countriesData';
 import {
   Search,
   Plus,
@@ -43,6 +47,11 @@ export const CollectionView: React.FC = () => {
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<CollectionItem | null>(null);
   const [isCreateCountryModalOpen, setIsCreateCountryModalOpen] = useState(false);
+  const [countryToEdit, setCountryToEdit] = useState<string | null>(null);
+  const [isEditCountryModalOpen, setIsEditCountryModalOpen] = useState(false);
+  const [selectedNewCountry, setSelectedNewCountry] = useState<CountryData | null>(null);
+  const [isSubmittingCountry, setIsSubmittingCountry] = useState(false);
+  const [isDeletingCountry, setIsDeletingCountry] = useState(false);
   const [newCountryName, setNewCountryName] = useState('');
 
   // Live Queries
@@ -176,42 +185,78 @@ export const CollectionView: React.FC = () => {
     );
   };
 
-  const handleCreateCountryCollection = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = newCountryName.trim();
-    if (!trimmed) return;
-    const formatted = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-    await db.saveCountry(formatted);
-    setIsCreateCountryModalOpen(false);
-    setNewCountryName('');
-    setOpenedCountry(formatted);
-    showToast(`Created finds folder for ${formatted}!`, 'success');
+  const handleCreateCountryCollection = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isSubmittingCountry) return;
+
+    const queryOrName = (selectedNewCountry?.name || newCountryName).trim();
+    if (!queryOrName) {
+      showToast('Please select or search a country.', 'error');
+      return;
+    }
+
+    setIsSubmittingCountry(true);
+    try {
+      const countryInfo = selectedNewCountry || findCountryByNameOrCode(queryOrName);
+      const canonicalName = countryInfo ? countryInfo.name : (queryOrName.charAt(0).toUpperCase() + queryOrName.slice(1));
+      const code = countryInfo?.code;
+
+      // Check if folder already exists in allCountries
+      const existing = (allCountries || []).find(
+        (c) => c.name.toLowerCase() === canonicalName.toLowerCase() || (code && c.code === code)
+      );
+
+      if (existing) {
+        showToast(`"${canonicalName}" folder already exists. Opening it now.`, 'info');
+        setOpenedCountry(canonicalName);
+        setIsCreateCountryModalOpen(false);
+        setNewCountryName('');
+        setSelectedNewCountry(null);
+        return;
+      }
+
+      await db.saveCountry(canonicalName, undefined, code);
+      setIsCreateCountryModalOpen(false);
+      setNewCountryName('');
+      setSelectedNewCountry(null);
+      setOpenedCountry(canonicalName);
+      showToast(`Created finds folder for ${canonicalName}!`, 'success');
+    } catch (err: any) {
+      showToast('Error creating country folder: ' + (err?.message || 'Unknown error'), 'error');
+    } finally {
+      setIsSubmittingCountry(false);
+    }
   };
 
   const handleDeleteCountry = async (e: React.MouseEvent, countryName: string, count: number) => {
     e.stopPropagation();
-    const confirmed = await showConfirm({
-      title: `Delete "${countryName}" folder?`,
-      kicker: 'DELETE FINDS FOLDER',
-      message: count > 0
-        ? `This will remove the ${countryName} folder from your Finds. Your ${count} saved find${count > 1 ? 's' : ''} will be kept safely in All Saved Finds.`
-        : `This will remove the ${countryName} folder from your Finds.`,
-      confirmText: 'Delete Folder',
-      cancelText: 'Keep Folder',
-      variant: 'destructive',
-      icon: 'trash',
-    });
+    if (isDeletingCountry) return;
+    setIsDeletingCountry(true);
 
-    if (confirmed) {
-      try {
+    try {
+      const confirmed = await showConfirm({
+        title: `Delete "${countryName}" folder?`,
+        kicker: 'DELETE FINDS FOLDER',
+        message: count > 0
+          ? `This will remove the ${countryName} folder from your Finds. Your ${count} saved find${count > 1 ? 's' : ''} will be kept safely in All Saved Finds.`
+          : `This will remove the ${countryName} folder from your Finds.`,
+        confirmText: 'Delete Folder',
+        cancelText: 'Keep Folder',
+        variant: 'destructive',
+        icon: 'trash',
+      });
+
+      if (confirmed) {
         await db.deleteCountry(countryName);
         if (openedCountry?.toLowerCase() === countryName.toLowerCase()) {
           setOpenedCountry(null);
         }
         showToast(`Deleted ${countryName} folder.`, 'info');
-      } catch (err: any) {
-        showToast('Error deleting country folder: ' + err.message, 'error');
       }
+    } catch (err: any) {
+      showToast('Error deleting country folder: ' + (err?.message || 'Unknown error'), 'error');
+    } finally {
+      setIsDeletingCountry(false);
     }
   };
 
@@ -419,6 +464,32 @@ export const CollectionView: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '6px' }}>
                     <button
                       type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCountryToEdit(col.country);
+                        setIsEditCountryModalOpen(true);
+                      }}
+                      title={`Edit ${col.country} folder`}
+                      aria-label={`Edit ${col.country} folder`}
+                      style={{
+                        background: 'rgba(0, 0, 0, 0.45)',
+                        backdropFilter: 'blur(4px)',
+                        border: '1px solid rgba(255, 255, 255, 0.25)',
+                        color: '#ffffff',
+                        borderRadius: '9999px',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      <Edit2 size={11} strokeWidth={2.2} />
+                    </button>
+                    <button
+                      type="button"
                       onClick={(e) => handleDeleteCountry(e, col.country, col.count)}
                       title={`Delete ${col.country} folder`}
                       aria-label={`Delete ${col.country} folder`}
@@ -513,16 +584,33 @@ export const CollectionView: React.FC = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {openedCountry !== '__all__' && (
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteCountry(e, openedCountry, currentCountryItems.length)}
-                  className="btn btn-ghost btn-sm"
-                  style={{ minHeight: '34px', padding: '4px 10px', fontSize: '0.78rem', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  title={`Delete ${openedCountry} folder`}
-                >
-                  <Trash2 size={13} strokeWidth={2} />
-                  <span>Delete Folder</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCountryToEdit(openedCountry);
+                      setIsEditCountryModalOpen(true);
+                    }}
+                    className="btn btn-ghost btn-sm"
+                    style={{ minHeight: '34px', padding: '4px 10px', fontSize: '0.78rem', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    title={`Edit ${openedCountry} folder details`}
+                  >
+                    <Edit2 size={13} strokeWidth={2} />
+                    <span>Edit Folder</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteCountry(e, openedCountry, currentCountryItems.length)}
+                    disabled={isDeletingCountry}
+                    className="btn btn-ghost btn-sm"
+                    style={{ minHeight: '34px', padding: '4px 10px', fontSize: '0.78rem', color: '#DC2626', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    title={`Delete ${openedCountry} folder`}
+                  >
+                    <Trash2 size={13} strokeWidth={2} />
+                    <span>Delete Folder</span>
+                  </button>
+                </>
               )}
 
               <button
@@ -932,7 +1020,7 @@ export const CollectionView: React.FC = () => {
       )}
 
       {/* Sheet Modal for creating a new Country Finds Folder */}
-      {isCreateCountryModalOpen && (
+      <ModalPortal isOpen={isCreateCountryModalOpen}>
         <div className="modal-overlay" onClick={() => setIsCreateCountryModalOpen(false)}>
           <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="sheet-drag-handle" />
@@ -957,37 +1045,56 @@ export const CollectionView: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCreateCountryCollection}
+                disabled={isSubmittingCountry}
                 className="btn btn-ghost"
-                style={{ fontSize: '0.88rem', fontWeight: 700, padding: '0 4px', color: 'var(--primary)' }}
+                style={{ fontSize: '0.88rem', fontWeight: 700, padding: '0 4px', color: 'var(--primary)', opacity: isSubmittingCountry ? 0.5 : 1 }}
               >
-                Create
+                {isSubmittingCountry ? 'Creating...' : 'Create'}
               </button>
             </div>
 
             <form onSubmit={handleCreateCountryCollection} style={{ padding: '18px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
-                <label className="label-micro">Country Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Greece, Norway, New Zealand, Vietnam..."
+                <label className="label-micro" style={{ marginBottom: '6px', display: 'block' }}>Search or Type Country</label>
+                <CountryPicker
                   value={newCountryName}
-                  onChange={(e) => setNewCountryName(e.target.value)}
-                  className="input"
-                  required
+                  onChange={(country) => {
+                    setSelectedNewCountry(country);
+                    setNewCountryName(country.name);
+                  }}
+                  placeholder="Search country (e.g. Greece, Norway, USA)..."
                   autoFocus
+                  id="new-country-folder-picker"
                 />
               </div>
 
               <p style={{ fontSize: '0.74rem', color: 'var(--secondary)', margin: 0, lineHeight: 1.4 }}>
-                Creates a folder for organizing field notes, attractions, food, and stays for this destination.
+                Creates a dedicated folder for organizing field notes, attractions, food, and stays for this destination.
               </p>
 
-              <button type="submit" className="btn btn-primary" style={{ marginTop: '4px' }}>
-                <span>Create Folder</span>
+              <button
+                type="submit"
+                disabled={isSubmittingCountry}
+                className="btn btn-primary"
+                style={{ marginTop: '4px', height: '44px', fontWeight: 700 }}
+              >
+                <span>{isSubmittingCountry ? 'Creating Folder...' : 'Create Folder'}</span>
               </button>
             </form>
           </div>
         </div>
+      </ModalPortal>
+
+      {/* Edit Country Folder Modal */}
+      {countryToEdit && (
+        <EditCountryModal
+          isOpen={isEditCountryModalOpen}
+          onClose={() => {
+            setIsEditCountryModalOpen(false);
+            setCountryToEdit(null);
+          }}
+          countryName={countryToEdit}
+        />
       )}
 
       {/* Save Item Sheet Modal */}
