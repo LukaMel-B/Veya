@@ -22,6 +22,7 @@ import {
   Coins,
   X,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 export const OnboardingModal: React.FC = () => {
   const { isOnboardingOpen, completeOnboarding, userProfile } = useApp();
@@ -79,20 +80,14 @@ export const OnboardingModal: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99990,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
+    <ModalPortal isOpen={isOnboardingOpen}>
+      <div
+        className="modal-overlay"
+        style={{
+          alignItems: 'center',
+          padding: '16px',
+        }}
+      >
       <div
         className="travelnest-card"
         style={{
@@ -745,5 +740,6 @@ export const OnboardingModal: React.FC = () => {
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

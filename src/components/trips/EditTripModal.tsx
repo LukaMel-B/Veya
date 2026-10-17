@@ -4,7 +4,8 @@ import { useApp } from '../../context/AppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Trip, TripStatus } from '../../types';
 import { getCountryFlag, getCountryCover, detectCountry } from '../../utils/countryUtils';
-import { Globe, Upload, ImageIcon, X } from 'lucide-react';
+import { Globe, Upload, ImageIcon, X, Trash2 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface EditTripModalProps {
   trip: Trip;
@@ -19,7 +20,32 @@ export const EditTripModal: React.FC<EditTripModalProps> = ({
   onClose,
   onSaved,
 }) => {
-  const { showToast, showConfirm } = useApp();
+  const { showToast, showConfirm, activeTripId, setActiveTripId } = useApp();
+
+  const handleDeleteTrip = async () => {
+    const confirmed = await showConfirm({
+      title: `Delete Trip "${trip.name}"?`,
+      categoryKicker: 'DESTRUCTIVE ACTION',
+      description: `This will permanently delete "${trip.name}" and all its itinerary events, expenses, bookings, documents, transit legs, and packing lists.`,
+      warningMessage: 'Saved finds, global places, and reusable recipes will not be deleted.',
+      confirmText: 'Delete Trip',
+      cancelText: 'Keep Trip',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.deleteTripCascade(trip.id);
+        if (activeTripId === trip.id) {
+          setActiveTripId(null);
+        }
+        showToast(`Trip "${trip.name}" deleted. Saved items & memories were preserved.`, 'info');
+        onClose();
+      } catch (err: any) {
+        showToast('Error deleting trip: ' + err.message, 'error');
+      }
+    }
+  };
 
   const [title, setTitle] = useState(trip.name);
   const [country, setCountry] = useState(trip.country || detectCountry(trip.destination));
@@ -187,8 +213,9 @@ export const EditTripModal: React.FC<EditTripModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={handleRequestClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
+    <ModalPortal isOpen={isOpen}>
+      <div className="modal-overlay" onClick={handleRequestClose}>
+        <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-drag-handle" />
 
         {/* Modal Navigation Header */}
@@ -505,11 +532,23 @@ export const EditTripModal: React.FC<EditTripModalProps> = ({
             />
           </div>
 
-          <button type="submit" className="btn btn-primary" style={{ marginTop: '8px' }}>
-            <span>Save Changes</span>
-          </button>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>
+            <button
+              type="button"
+              onClick={handleDeleteTrip}
+              className="btn btn-secondary"
+              style={{ color: '#dc2626', borderColor: '#fee2e2', padding: '0 14px' }}
+              title="Delete Trip"
+            >
+              <Trash2 size={16} />
+            </button>
+            <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
+              <span>Save Changes</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 };

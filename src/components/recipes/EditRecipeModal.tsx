@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { db } from '../../db/database';
+import { useApp } from '../../context/AppContext';
 import type { Recipe, RecipeCategory, RecipeIngredient } from '../../types';
 import { X, Plus, Trash2, Clock, Users, Tag } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface EditRecipeModalProps {
   initialRecipe?: Partial<Recipe> | null;
@@ -26,6 +28,7 @@ export const EditRecipeModal: React.FC<EditRecipeModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { showConfirm, showToast } = useApp();
   const [title, setTitle] = useState(initialRecipe?.title || '');
   const [description, setDescription] = useState(initialRecipe?.description || '');
   const [category, setCategory] = useState<RecipeCategory>(initialRecipe?.category || 'dinner');
@@ -34,6 +37,56 @@ export const EditRecipeModal: React.FC<EditRecipeModalProps> = ({
   const [cookTimeMinutes, setCookTimeMinutes] = useState(initialRecipe?.cookTimeMinutes || 15);
   const [imageUrl, setImageUrl] = useState(initialRecipe?.imageUrl || '');
   const [tagsString, setTagsString] = useState((initialRecipe?.tags || ['quick']).join(', '));
+
+  const isDirty = initialRecipe
+    ? title !== (initialRecipe.title || '') ||
+      description !== (initialRecipe.description || '') ||
+      category !== (initialRecipe.category || 'dinner') ||
+      servings !== (initialRecipe.servings || 2) ||
+      prepTimeMinutes !== (initialRecipe.prepTimeMinutes || 10) ||
+      cookTimeMinutes !== (initialRecipe.cookTimeMinutes || 15) ||
+      imageUrl !== (initialRecipe.imageUrl || '') ||
+      tagsString !== ((initialRecipe.tags || ['quick']).join(', '))
+    : Boolean(title.trim() || description.trim() || imageUrl.trim());
+
+  const handleRequestClose = async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm({
+        title: initialRecipe?.id ? 'Discard Recipe Edits?' : 'Discard New Recipe?',
+        categoryKicker: 'GUARD SHEET',
+        description: 'You have unsaved changes to this recipe. Are you sure you want to discard them?',
+        warningMessage: 'Changes will not be saved to your cookbook.',
+        confirmText: 'Discard Changes',
+        cancelText: 'Keep Editing',
+        variant: 'destructive',
+        iconName: 'edit',
+      });
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!initialRecipe?.id) return;
+    const confirmed = await showConfirm({
+      title: `Delete "${title || 'this recipe'}"?`,
+      categoryKicker: 'REUSABLE RECIPE',
+      description: `This will remove "${title || 'this recipe'}" from your reusable recipe cookbook. Existing trips and meal plans referencing it will remain safely in place.`,
+      confirmText: 'Delete Recipe',
+      cancelText: 'Keep Recipe',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.recipes.delete(initialRecipe.id);
+        showToast('Recipe deleted.', 'info');
+        onClose();
+      } catch (err: any) {
+        showToast('Failed to delete recipe: ' + err.message, 'error');
+      }
+    }
+  };
 
   const [ingredients, setIngredients] = useState<RecipeIngredient[]>(
     initialRecipe?.ingredients && initialRecipe.ingredients.length > 0
@@ -120,35 +173,20 @@ export const EditRecipeModal: React.FC<EditRecipeModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: '20px',
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-        }}
+        className="modal-overlay"
+        onClick={handleRequestClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '560px',
+            backgroundColor: '#FFFFFF',
+            padding: '20px',
+          }}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div>
             <span className="label-micro">REUSABLE RECIPE LIBRARY</span>
@@ -156,7 +194,13 @@ export const EditRecipeModal: React.FC<EditRecipeModalProps> = ({
               {initialRecipe?.id ? 'Edit Recipe' : 'New Reusable Recipe'}
             </h3>
           </div>
-          <button onClick={onClose} className="btn-icon" style={{ width: '32px', height: '32px' }} aria-label="Close modal">
+          <button
+            type="button"
+            onClick={handleRequestClose}
+            className="btn-icon"
+            style={{ width: '32px', height: '32px' }}
+            aria-label="Close modal"
+          >
             <X size={18} />
           </button>
         </div>
@@ -408,7 +452,18 @@ export const EditRecipeModal: React.FC<EditRecipeModalProps> = ({
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>
+            {initialRecipe?.id && (
+              <button
+                type="button"
+                onClick={handleDeleteRecipe}
+                className="btn btn-secondary"
+                style={{ color: '#dc2626', borderColor: '#fee2e2', padding: '0 14px' }}
+                title="Delete Recipe"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+            <button type="button" onClick={handleRequestClose} className="btn btn-secondary" style={{ flex: 1 }}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
@@ -418,5 +473,6 @@ export const EditRecipeModal: React.FC<EditRecipeModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

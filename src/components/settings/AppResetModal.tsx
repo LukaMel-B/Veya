@@ -8,6 +8,7 @@ import {
   Sparkles,
   ShieldAlert,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface AppResetModalProps {
   isOpen: boolean;
@@ -37,22 +38,26 @@ export const AppResetModal: React.FC<AppResetModalProps> = ({ isOpen, onClose })
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99990,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
+    <ModalPortal isOpen={isOpen}>
       <div
-        className="travelnest-card"
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 99990,
+          backgroundColor: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'max(16px, env(safe-area-inset-top, 16px)) max(16px, env(safe-area-inset-right, 16px)) max(16px, env(safe-area-inset-bottom, 16px)) max(16px, env(safe-area-inset-left, 16px))',
+          colorScheme: 'light',
+        }}
+      >
+        <div
+          className="travelnest-card"
+          onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '480px',
@@ -317,5 +322,6 @@ export const AppResetModal: React.FC<AppResetModalProps> = ({ isOpen, onClose })
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

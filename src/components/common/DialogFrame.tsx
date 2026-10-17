@@ -1,5 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle } from 'lucide-react';
+import { acquireScrollLock, releaseScrollLock, useVisualViewport } from './ModalPortal';
 
 export type DialogVariant = 'neutral' | 'destructive' | 'warning' | 'success' | 'info';
 
@@ -36,6 +38,23 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({
   children,
   actions,
 }) => {
+  const [mounted, setMounted] = useState(false);
+  const vv = useVisualViewport();
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // Lock background scroll while modal/dialog is visible
+  useEffect(() => {
+    if (!isOpen) return;
+    acquireScrollLock();
+    return () => {
+      releaseScrollLock();
+    };
+  }, [isOpen]);
+
   // Listen for Escape key on PWA / Desktop
   useEffect(() => {
     if (!isOpen || !dismissOnEscape) return;
@@ -51,18 +70,44 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, dismissOnEscape, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted || typeof document === 'undefined') return null;
 
-  return (
+  // Viewport-aware positioning accounting for iOS Safari dynamic chrome,
+  // safe areas, and on-screen keyboard
+  const backdropStyle: React.CSSProperties = {
+    position: 'fixed',
+    top: vv ? `${vv.top}px` : 0,
+    left: 0,
+    right: 0,
+    bottom: vv ? undefined : 0,
+    height: vv ? `${vv.height}px` : '100%',
+    maxHeight: vv ? `${vv.height}px` : '100dvh',
+    zIndex: 99999,
+    colorScheme: 'light',
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (dismissOnBackdrop && e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  return createPortal(
     <div
       className="dialog-backdrop"
-      onClick={dismissOnBackdrop ? onClose : undefined}
+      style={backdropStyle}
+      onClick={handleBackdropClick}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
     >
       <div
         className="dialog-frame"
+        style={{
+          backgroundColor: '#ffffff',
+          color: '#111111',
+          colorScheme: 'light',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header Slot: Icon Pill + Close Button */}
@@ -79,8 +124,8 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({
               onClick={onClose}
               aria-label="Dismiss dialog"
               style={{
-                width: '32px',
-                height: '32px',
+                width: '44px',
+                height: '44px',
                 borderRadius: '9999px',
                 display: 'flex',
                 alignItems: 'center',
@@ -90,6 +135,8 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({
                 cursor: 'pointer',
                 color: 'var(--secondary)',
                 transition: 'background-color 150ms ease, color 150ms ease',
+                touchAction: 'manipulation',
+                margin: '-6px -6px 0 0',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'var(--surface-neutral-2)';
@@ -153,6 +200,7 @@ export const DialogFrame: React.FC<DialogFrameProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

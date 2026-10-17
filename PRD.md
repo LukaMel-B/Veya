@@ -1377,6 +1377,43 @@ Database schema version 7 introduces 6 new IndexedDB stores:
 * [x] **Dexie Schema v7 & Cascade Safety:** Added 6 companion tables (`transportLegs`, `recipes`, `baseIngredientPrices`, `tripIngredientOverrides`, `tripMealPlans`, `tripGroceryItems`). `deleteTripCascade` cleanly purges trip-specific companion entities while strictly preserving global places, collection items, journal entries, reusable recipes, and base ingredient prices.
 * [x] **Dedicated Automated Test Suite (80 Assertions):** Created `src/tests/travelCompanion.test.ts` covering multi-leg transit, GTFS/timetable parsing, recipe pricing & grocery aggregation, offline geo & compass bearings, record pack exchange, schema v7 migration, and non-cascading deletion safety. All 80 assertions pass cleanly.
 * [x] **Full Quality Verification:** All 7 test suites pass with 0 failures (320+ assertions). `npm run lint` passes with 0 errors. `npm run build` compiles with 0 errors. Native Capacitor sync (`npm run cap:sync`) succeeds for both Android and iOS in 0.15s.
-
-
+### Release 2.7.0 Checklist (iPhone, iOS Safari & PWA Dialog Fixes, Theme Consistency & Sandbox Removal)
+* [x] **Complete Removal of Unwanted Settings Sandbox:**
+  * Completely removed the "Interactive Modal Trigger Sandbox" card (Group 5 in `SettingsView.tsx`), including its heading, description, demo buttons (Standard Confirm, Destructive Delete, Form Entry, Schedule Conflict, Progress State), and associated demo-only UI.
+  * Cleaned up demo-only state, handlers (`handleSandboxStandardConfirm`, `handleSandboxDestructive`, etc.), and unused imports (`Layers`).
+  * Ensured zero replacement sandbox or preview section is added.
+  * Preserved all legitimate Settings workflows (Backup & Restore, Sample Data, Guided Tour, Reset Options, Storage Info).
+  * Preserved all shared dialog primitives (`DialogFrame.tsx`, `ConfirmDialog.tsx`, `GlobalDialog.tsx`, design tokens).
+* [x] **Strict Light Theme Enforcement Across All In-App Dialogs:**
+  * Enforced Veya's light theme on all dialogs, alerts, sheets, and popups regardless of iOS system appearance or `prefers-color-scheme: dark`.
+  * Set `color-scheme: light !important;` and explicit `#ffffff` backgrounds on `.dialog-frame`, `.modal-sheet`, inputs, select dropdowns, and `.veya-modal-portal-root`.
+  * Preserved zero native `window.alert()` and `window.confirm()` calls, routing all confirmation and information alerts through custom light-themed in-app components.
+* [x] **Viewport-Relative Positioning on iPhone, iOS Safari & Installed PWA:**
+  * Portaled all modal overlays, dialogs, and sheets to `document.body` via `<ModalPortal>` and `<DialogFrame>`, rendering them at the root DOM level.
+  * Removed `transform: translateZ(0)` containing block traps from `.travelnest-scroll-view` and `.cupertino-scroll-view` that previously caused fixed dialogs to render off-screen relative to page scroll.
+  * Dialogs triggered from buttons near the bottom of long scrollable pages now appear centered in the currently visible viewport without forcing the user to scroll up.
+  * Connected `useVisualViewport` to track `window.visualViewport.height` and `offsetTop`, adjusting modal positioning when Safari's dynamic navigation bar collapses or expands and when the on-screen keyboard is active.
+  * Respected iPhone safe areas with `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)`, ensuring headers and action buttons are never obscured by the notch, Dynamic Island, or home indicator.
+  * Constrained dialog heights to available viewport height with internal touch scrolling (`-webkit-overflow-scrolling: touch; overscroll-behavior: contain;`).
+* [x] **iOS & PWA Interaction Conventions:**
+  * Implemented reference-counted background scroll locking (`acquireScrollLock`, `releaseScrollLock`) on `document.body`, preventing underlying page scrolling while dialogs are open.
+  * Provided touch-friendly controls with min 44px tap targets for buttons and close controls.
+  * Supported deliberate backdrop dismissal while protecting content clicks via `e.stopPropagation()`.
+  * Maintained Android hardware back button gesture listener via `@capacitor/app` alongside iOS and PWA escape listeners.
+* [x] **Repair Confirmation & Destructive Action Execution Flow:**
+  * Resolved Promise settlement race condition in `AppContext.tsx` and `GlobalDialog.tsx` where `closeActiveDialog` previously called `activeDialog.resolve(false)` unconditionally, settling all confirmations to `false` and preventing destructive operations from running.
+  * Added parameter `closeActiveDialog(confirmResult?: boolean)` and updated `GlobalDialog.tsx` so `handleConfirm` explicitly resolves `true` while `handleCancel` / background dismiss resolves `false`.
+  * Audited and wired confirmation dialogs with clear explanations, destructive variants, and toast feedback across all domains:
+    * Trips: deletion via `TripsView.tsx` and `EditTripModal.tsx` using `db.deleteTripCascade` (clearing `activeTripId` if current trip is active).
+    * Trip contents: saved items (`TripSavedCollectionView.tsx`), itinerary events (`ItineraryView.tsx`), budget expenses (`BudgetView.tsx`), bookings (`BookingsView.tsx`), essentials (`EssentialsView.tsx`), documents (`DocumentsView.tsx`), transit legs (`CompanionView.tsx`, `EditTransportLegModal.tsx`), and meal plans (`CompanionView.tsx`, `MealPlanModal.tsx`).
+    * Finds & Countries: country folder deletion and item deletion in `CollectionView.tsx` and `CollectionItemDetailView.tsx`.
+    * Recipes & Pricing: reusable recipe deletion in `RecipeDetailModal.tsx` and `EditRecipeModal.tsx`, ingredient base prices and trip overrides in `IngredientPriceModal.tsx`, and grocery expense logging in `GroceryTrackerModal.tsx`.
+    * Settings & Backup: database restore in `SettingsView.tsx`, sample data replacement in `AddSampleDataModal.tsx`, dummy data removal in `RemoveSampleDataModal.tsx`, and overwrite imports in `RecordExchangeModal.tsx`.
+  * Added unsaved edits guard sheets (`isDirty` + `showConfirm`) to prevent accidental data loss in `QuickAddModal.tsx`, `EditTripModal.tsx`, `SaveItemModal.tsx`, `JournalEntryModal.tsx`, `EditRecipeModal.tsx`, `EditTransportLegModal.tsx`, `MealPlanModal.tsx`, and `EditProfileModal.tsx`.
+  * Guaranteed data protection invariants: deleting a trip cascade-deletes only trip-owned records while strictly preserving global places, collection items/finds, journal entries/memories, reusable recipes, and base ingredient prices.
+* [x] **Automated Test Suite (58 Assertions) & Build Verification:**
+  * Created `src/tests/destructiveActionsAndConfirmations.test.ts` covering dialog resolution promises, trip cascade deletion, finds/country deletion, unsaved dirty state calculations, and error resilience.
+  * Added to `package.json` test script; all 9 test suites pass cleanly (100% pass rate, 400+ assertions).
+  * Production bundle built successfully (`npm run build`): Zero TypeScript or bundling errors.
+  * Synchronized native Capacitor assets for iOS and Android (`npm run cap:sync`).
 

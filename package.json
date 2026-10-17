@@ -14,7 +14,7 @@
     "cap:run:ios": "npx cap run ios",
     "cap:sync": "npx cap sync",
     "lint": "oxlint",
-    "test": "jiti src/tests/onboardingAndData.test.ts && jiti src/tests/safeUpdateAndMigration.test.ts && jiti src/tests/dummyRemovalAndTripDelete.test.ts && jiti src/tests/dialogComponentLibrary.test.ts && jiti src/tests/collectionTripAssociation.test.ts && jiti src/tests/spotlightTour.test.ts && jiti src/tests/travelCompanion.test.ts && jiti src/tests/findsAndCountryDeletion.test.ts",
+    "test": "jiti src/tests/onboardingAndData.test.ts && jiti src/tests/safeUpdateAndMigration.test.ts && jiti src/tests/dummyRemovalAndTripDelete.test.ts && jiti src/tests/dialogComponentLibrary.test.ts && jiti src/tests/collectionTripAssociation.test.ts && jiti src/tests/spotlightTour.test.ts && jiti src/tests/travelCompanion.test.ts && jiti src/tests/findsAndCountryDeletion.test.ts && jiti src/tests/destructiveActionsAndConfirmations.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {

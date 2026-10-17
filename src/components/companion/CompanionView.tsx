@@ -56,7 +56,7 @@ interface CompanionViewProps {
 }
 
 export const CompanionView: React.FC<CompanionViewProps> = ({ tripId }) => {
-  const { openQuickAdd, openJournalModal } = useApp();
+  const { openQuickAdd, openJournalModal, showConfirm, showToast } = useApp();
 
   const trip = useLiveQuery(() => db.trips.get(tripId), [tripId]);
   const events = useLiveQuery(() => db.itineraryEvents.where('tripId').equals(tripId).toArray(), [tripId]);
@@ -368,8 +368,36 @@ export const CompanionView: React.FC<CompanionViewProps> = ({ tripId }) => {
                           }}
                           className="btn-icon"
                           style={{ width: '26px', height: '26px' }}
+                          title="Edit transit leg"
                         >
                           <Pencil size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const confirmed = await showConfirm({
+                              title: 'Delete Transit Leg?',
+                              categoryKicker: 'TRANSIT SCHEDULE',
+                              description: `Are you sure you want to delete ${leg.carrier || leg.lineOrFlightNumber || 'this transit leg'} (${leg.departureLocation} → ${leg.arrivalLocation})?`,
+                              confirmText: 'Delete Leg',
+                              cancelText: 'Keep Leg',
+                              variant: 'destructive',
+                              iconName: 'trash',
+                            });
+                            if (confirmed) {
+                              try {
+                                await db.transportLegs.delete(leg.id);
+                                showToast('Transit leg deleted.', 'info');
+                              } catch (err: any) {
+                                showToast('Failed to delete transit leg: ' + err.message, 'error');
+                              }
+                            }
+                          }}
+                          className="btn-icon"
+                          style={{ width: '26px', height: '26px', color: '#dc2626' }}
+                          title="Delete transit leg"
+                        >
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     </div>
@@ -569,10 +597,27 @@ export const CompanionView: React.FC<CompanionViewProps> = ({ tripId }) => {
                     <button
                       type="button"
                       onClick={async () => {
-                        await db.tripMealPlans.delete(plan.id);
+                        const confirmed = await showConfirm({
+                          title: 'Remove Planned Meal?',
+                          categoryKicker: 'MEAL SCHEDULE',
+                          description: `Remove this meal (${plan.mealType}) from the trip schedule? Reusable recipes will remain intact.`,
+                          confirmText: 'Remove Meal',
+                          cancelText: 'Keep Meal',
+                          variant: 'destructive',
+                          iconName: 'trash',
+                        });
+                        if (confirmed) {
+                          try {
+                            await db.tripMealPlans.delete(plan.id);
+                            showToast('Planned meal removed.', 'info');
+                          } catch (err: any) {
+                            showToast('Failed to remove meal plan: ' + err.message, 'error');
+                          }
+                        }
                       }}
                       className="btn-icon"
                       style={{ width: '26px', height: '26px', color: '#dc2626' }}
+                      title="Remove planned meal"
                     >
                       <Trash2 size={13} />
                     </button>

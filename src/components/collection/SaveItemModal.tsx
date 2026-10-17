@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   Luggage,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface SaveItemModalProps {
   isOpen: boolean;
@@ -283,8 +284,9 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleRequestClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh' }}>
+    <ModalPortal isOpen={isOpen}>
+      <div className="modal-overlay" onClick={handleRequestClose}>
+        <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: 'calc(100dvh - env(safe-area-inset-top, 20px) - 16px)' }}>
         <div className="sheet-drag-handle" />
 
         {/* Navigation Header */}
@@ -623,5 +625,6 @@ export const SaveItemModal: React.FC<SaveItemModalProps> = ({
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 };

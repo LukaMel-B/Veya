@@ -19,6 +19,7 @@ import {
   BookOpen,
   Filter,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface RecipeLibraryModalProps {
   tripId?: string;
@@ -95,20 +96,27 @@ export const RecipeLibraryModal: React.FC<RecipeLibraryModalProps> = ({
 
   return (
     <>
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 9998,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-        }}
-      >
+      <ModalPortal>
         <div
-          className="travelnest-card animate-slide-up"
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 99980,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            paddingTop: 'env(safe-area-inset-top, 0px)',
+            paddingBottom: 0,
+            colorScheme: 'light',
+          }}
+        >
+          <div
+            className="travelnest-card animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
           style={{
             width: '100%',
             maxWidth: '580px',
@@ -357,6 +365,7 @@ export const RecipeLibraryModal: React.FC<RecipeLibraryModalProps> = ({
           </div>
         </div>
       </div>
+      </ModalPortal>
 
       {/* Viewing Detail Modal */}
       {viewingRecipe && (

@@ -6,6 +6,7 @@ import { useApp } from '../../context/AppContext';
 import { formatDateRangeDDmmmYY } from '../../utils/dateUtils';
 import { getCountryFlag } from '../../utils/countryUtils';
 import { X, Luggage, Globe, Check, AlertCircle } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface AssignTripModalProps {
   isOpen: boolean;
@@ -63,23 +64,27 @@ export const AssignTripModal: React.FC<AssignTripModalProps> = ({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div
-      className="dialog-backdrop"
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
-        backdropFilter: 'blur(4px)',
-        WebkitBackdropFilter: 'blur(4px)',
-        zIndex: 99999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
+    <ModalPortal isOpen={isOpen}>
+      <div
+        className="dialog-backdrop"
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.45)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          zIndex: 99999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'max(16px, env(safe-area-inset-top, 16px)) max(16px, env(safe-area-inset-right, 16px)) max(16px, env(safe-area-inset-bottom, 16px)) max(16px, env(safe-area-inset-left, 16px))',
+          colorScheme: 'light',
+        }}
+      >
       <div
         className="dialog-frame"
         onClick={(e) => e.stopPropagation()}
@@ -337,5 +342,6 @@ export const AssignTripModal: React.FC<AssignTripModalProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

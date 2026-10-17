@@ -91,9 +91,9 @@ interface AppContextType {
   isDialogOpen: boolean;
   showConfirm: (options: ConfirmDialogOptions) => Promise<boolean>;
   showAlert: (options: AlertDialogOptions) => Promise<void>;
-  closeActiveDialog: () => void;
-
-  // Profile & Onboarding & Tour
+  closeActiveDialog: (confirmResult?: boolean) => void;
+ 
+   // Profile & Onboarding & Tour
   userProfile: UserProfile;
   updateUserProfile: (profile: Partial<UserProfile>) => void;
   isOnboardingOpen: boolean;
@@ -153,10 +153,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Alert & Dialog Component Library System
   const [activeDialog, setActiveDialog] = useState<ActiveDialogState | null>(null);
 
-  const closeActiveDialog = useCallback(() => {
+  const closeActiveDialog = useCallback((confirmResult?: boolean) => {
     if (activeDialog) {
       if (activeDialog.type === 'confirm') {
-        activeDialog.resolve(false);
+        activeDialog.resolve(confirmResult ?? false);
       } else {
         activeDialog.resolve();
       }

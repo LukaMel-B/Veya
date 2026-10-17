@@ -3,6 +3,7 @@ import { db } from '../../db/database';
 import { parseGtfsZip, parseTimetableJson, convertTransitEntryToLeg } from '../../utils/gtfsParser';
 import type { ParsedTimetableFeed, TransitRoute, TransitScheduleEntry, TransportLeg } from '../../types';
 import { X, Upload, Train, FileText, Check, AlertCircle, ArrowRight } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface GtfsImportModalProps {
   tripId: string;
@@ -94,35 +95,20 @@ export const GtfsImportModal: React.FC<GtfsImportModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: '20px',
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-        }}
+        className="modal-overlay"
+        onClick={onClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '560px',
+            backgroundColor: '#FFFFFF',
+            padding: '20px',
+          }}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div>
             <span className="label-micro">OFFICIAL TIMETABLE & GTFS</span>
@@ -336,5 +322,6 @@ export const GtfsImportModal: React.FC<GtfsImportModalProps> = ({
         )}
       </div>
     </div>
+  </ModalPortal>
   );
 };

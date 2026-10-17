@@ -21,10 +21,10 @@ export const GlobalDialog: React.FC = () => {
     };
 
     const handleDismiss = () => {
-      closeActiveDialog();
       resolve();
+      closeActiveDialog();
     };
-
+ 
     return (
       <DialogFrame
         isOpen={true}
@@ -69,13 +69,13 @@ export const GlobalDialog: React.FC = () => {
   } = activeDialog;
 
   const handleConfirm = () => {
-    closeActiveDialog();
     resolve(true);
+    closeActiveDialog(true);
   };
 
   const handleCancel = () => {
-    closeActiveDialog();
     resolve(false);
+    closeActiveDialog(false);
   };
 
   return (

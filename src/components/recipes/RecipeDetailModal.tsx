@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { db } from '../../db/database';
+import { useApp } from '../../context/AppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { Recipe } from '../../types';
 import { calculateRecipeCost } from '../../utils/recipeUtils';
-import { X, Clock, Users, Pencil, Download, Plus, Check } from 'lucide-react';
+import { X, Clock, Users, Pencil, Download, Plus, Check, Trash2 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface RecipeDetailModalProps {
   recipe: Recipe;
@@ -20,8 +22,30 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   onEdit,
   onAddToMealPlan,
 }) => {
+  const { showConfirm, showToast } = useApp();
   const [servings, setServings] = useState(recipe.servings || 2);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
+
+  const handleDeleteRecipe = async () => {
+    const confirmed = await showConfirm({
+      title: `Delete "${recipe.title}"?`,
+      categoryKicker: 'REUSABLE RECIPE',
+      description: `This will remove "${recipe.title}" from your reusable recipe cookbook. Existing trips and meal plans referencing it will remain safely in place.`,
+      confirmText: 'Delete Recipe',
+      cancelText: 'Keep Recipe',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.recipes.delete(recipe.id);
+        showToast(`Recipe "${recipe.title}" deleted.`, 'info');
+        onClose();
+      } catch (err: any) {
+        showToast('Failed to delete recipe: ' + err.message, 'error');
+      }
+    }
+  };
 
   const basePrices = useLiveQuery(() => db.baseIngredientPrices.toArray(), []);
   const tripOverrides = useLiveQuery(
@@ -53,36 +77,20 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: 0,
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-          overflow: 'hidden',
-        }}
+        className="modal-overlay"
+        onClick={onClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '560px',
+            backgroundColor: '#FFFFFF',
+            padding: 0,
+          }}
+        >
         {/* Header Cover / Title */}
         <div style={{ position: 'relative' }}>
           {recipe.imageUrl ? (
@@ -341,6 +349,15 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
               <Pencil size={15} />
               <span>Edit</span>
             </button>
+            <button
+              type="button"
+              onClick={handleDeleteRecipe}
+              className="btn btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.82rem', color: '#dc2626', borderColor: '#fee2e2' }}
+              title="Delete Recipe"
+            >
+              <Trash2 size={15} />
+            </button>
             {onAddToMealPlan && (
               <button
                 type="button"
@@ -359,5 +376,6 @@ export const RecipeDetailModal: React.FC<RecipeDetailModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

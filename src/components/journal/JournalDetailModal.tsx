@@ -15,8 +15,9 @@ import {
   Edit2,
   Trash2,
   Sparkles,
-  AlertTriangle,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 
 interface JournalDetailModalProps {
   entry: JournalEntry | null;
@@ -89,37 +90,18 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({
   };
 
   return (
-    <>
+    <ModalPortal isOpen={isOpen}>
       <div
-        className="modal-backdrop"
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          zIndex: 1050,
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: 'center',
-        }}
+        className="modal-overlay"
         onClick={onClose}
       >
         <div
           className="modal-sheet"
-          style={{
-            width: '100%',
-            maxWidth: '520px',
-            maxHeight: '92vh',
-            backgroundColor: '#FFFFFF',
-            borderTopLeftRadius: '24px',
-            borderTopRightRadius: '24px',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            boxShadow: '0 -12px 48px rgba(0, 0, 0, 0.3)',
-          }}
           onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '520px',
+            backgroundColor: '#FFFFFF',
+          }}
         >
           {/* Header Action Bar */}
           <div
@@ -512,87 +494,20 @@ export const JournalDetailModal: React.FC<JournalDetailModalProps> = ({
         </div>
       </div>
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div
-          className="modal-backdrop"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
-            zIndex: 1100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-          }}
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div
-            className="travelnest-card"
-            style={{
-              width: '100%',
-              maxWidth: '380px',
-              backgroundColor: '#FFFFFF',
-              borderRadius: '20px',
-              padding: '24px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              style={{
-                width: '46px',
-                height: '46px',
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(217, 56, 58, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 14px',
-              }}
-            >
-              <AlertTriangle size={24} color="#D9383A" strokeWidth={2} />
-            </div>
-
-            <h3 style={{ fontSize: '1.15rem', fontWeight: 700, textAlign: 'center', margin: 0 }}>
-              Delete this memory?
-            </h3>
-
-            <p
-              style={{
-                fontSize: '0.84rem',
-                color: 'var(--secondary)',
-                textAlign: 'center',
-                margin: '8px 0 20px',
-                lineHeight: '1.45',
-              }}
-            >
-              This will remove this journal entry and its attached photos from your device. Linked trips, itinerary activities, and saved places will remain completely safe.
-            </p>
-
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="btn btn-secondary"
-                style={{ flex: 1, minHeight: '44px', borderRadius: '9999px' }}
-              >
-                Keep Memory
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={handleDelete}
-                className="btn btn-danger"
-                style={{ flex: 1, minHeight: '44px', borderRadius: '9999px' }}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        title="Delete this memory?"
+        kicker="IRREVERSIBLE"
+        message="This will remove this journal entry and its attached photos from your device. Linked trips, itinerary activities, and saved places will remain completely safe."
+        confirmText="Delete"
+        cancelText="Keep Memory"
+        variant="destructive"
+        icon="trash"
+        isLoading={isDeleting}
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
+    </ModalPortal>
   );
 };

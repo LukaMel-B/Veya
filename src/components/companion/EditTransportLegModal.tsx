@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { db } from '../../db/database';
+import { useApp } from '../../context/AppContext';
 import type { TransportLeg, TransportMode, Booking } from '../../types';
-import { X, Plane, Train, Bus, Navigation, Car, Bike, Footprints, Ship } from 'lucide-react';
+import { X, Plane, Train, Bus, Navigation, Car, Bike, Footprints, Ship, Trash2 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface EditTransportLegModalProps {
   tripId: string;
@@ -35,6 +37,7 @@ export const EditTransportLegModal: React.FC<EditTransportLegModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { showConfirm, showToast } = useApp();
   const [mode, setMode] = useState<TransportMode>(initialLeg?.mode || 'train');
   const [carrier, setCarrier] = useState(initialLeg?.carrier || '');
   const [lineOrFlightNumber, setLineOrFlightNumber] = useState(initialLeg?.lineOrFlightNumber || '');
@@ -51,6 +54,69 @@ export const EditTransportLegModal: React.FC<EditTransportLegModalProps> = ({
   const [notes, setNotes] = useState(initialLeg?.notes || '');
   const [selectedDay, setSelectedDay] = useState(initialLeg?.dayNumber || dayNumber);
   const [selectedDate, setSelectedDate] = useState(initialLeg?.date || date || new Date().toISOString().split('T')[0]);
+
+  const isDirty = initialLeg
+    ? mode !== (initialLeg.mode || 'train') ||
+      carrier !== (initialLeg.carrier || '') ||
+      lineOrFlightNumber !== (initialLeg.lineOrFlightNumber || '') ||
+      departureLocation !== (initialLeg.departureLocation || '') ||
+      departureTime !== (initialLeg.departureTime || '09:00') ||
+      arrivalLocation !== (initialLeg.arrivalLocation || '') ||
+      arrivalTime !== (initialLeg.arrivalTime || '10:30') ||
+      seatOrCabin !== (initialLeg.seatOrCabin || '') ||
+      platformOrGate !== (initialLeg.platformOrGate || '') ||
+      bookingRef !== (initialLeg.bookingRef || '') ||
+      bookingId !== (initialLeg.bookingId || '') ||
+      cost !== (initialLeg.cost ? String(initialLeg.cost) : '') ||
+      notes !== (initialLeg.notes || '') ||
+      selectedDay !== (initialLeg.dayNumber || dayNumber)
+    : Boolean(
+        departureLocation.trim() ||
+        arrivalLocation.trim() ||
+        carrier.trim() ||
+        lineOrFlightNumber.trim() ||
+        notes.trim() ||
+        bookingRef.trim()
+      );
+
+  const handleRequestClose = async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm({
+        title: initialLeg?.id ? 'Discard Transit Changes?' : 'Discard New Transit Leg?',
+        categoryKicker: 'GUARD SHEET',
+        description: 'You have unsaved transit changes. Are you sure you want to discard them?',
+        warningMessage: 'Changes will not be saved to your itinerary.',
+        confirmText: 'Discard Changes',
+        cancelText: 'Keep Editing',
+        variant: 'destructive',
+        iconName: 'edit',
+      });
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
+  const handleDeleteLeg = async () => {
+    if (!initialLeg?.id) return;
+    const confirmed = await showConfirm({
+      title: 'Delete Transit Leg?',
+      categoryKicker: 'TRANSIT SCHEDULE',
+      description: `Are you sure you want to delete ${carrier || lineOrFlightNumber || 'this transit leg'} (${departureLocation || 'Origin'} → ${arrivalLocation || 'Destination'})?`,
+      confirmText: 'Delete Leg',
+      cancelText: 'Keep Leg',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.transportLegs.delete(initialLeg.id);
+        showToast('Transit leg deleted.', 'info');
+        onClose();
+      } catch (err: any) {
+        showToast('Failed to delete leg: ' + err.message, 'error');
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,35 +153,20 @@ export const EditTransportLegModal: React.FC<EditTransportLegModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: '20px',
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-        }}
+        className="modal-overlay"
+        onClick={handleRequestClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '540px',
+            backgroundColor: '#FFFFFF',
+            padding: '20px',
+          }}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <span className="label-micro">MULTI-LEG TRANSPORT PLAN</span>
@@ -124,7 +175,8 @@ export const EditTransportLegModal: React.FC<EditTransportLegModalProps> = ({
             </h3>
           </div>
           <button
-            onClick={onClose}
+            type="button"
+            onClick={handleRequestClose}
             className="btn-icon"
             style={{ width: '32px', height: '32px' }}
             aria-label="Close modal"
@@ -345,7 +397,18 @@ export const EditTransportLegModal: React.FC<EditTransportLegModalProps> = ({
 
           {/* Action Buttons */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>
+            {initialLeg?.id && (
+              <button
+                type="button"
+                onClick={handleDeleteLeg}
+                className="btn btn-secondary"
+                style={{ color: '#dc2626', borderColor: '#fee2e2', padding: '0 14px' }}
+                title="Delete Transit Leg"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+            <button type="button" onClick={handleRequestClose} className="btn btn-secondary" style={{ flex: 1 }}>
               Cancel
             </button>
             <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
@@ -355,5 +418,6 @@ export const EditTransportLegModal: React.FC<EditTransportLegModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

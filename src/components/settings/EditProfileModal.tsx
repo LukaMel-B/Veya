@@ -7,6 +7,7 @@ import {
   AVATAR_OPTIONS,
 } from '../../utils/profileUtils';
 import { X, Check, Globe, Coins, User } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface EditProfileModalProps {
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) => {
-  const { userProfile, updateUserProfile } = useApp();
+  const { userProfile, updateUserProfile, showConfirm } = useApp();
 
   const [displayName, setDisplayName] = useState(userProfile.displayName || 'Traveler');
   const [avatar, setAvatar] = useState(userProfile.avatar || 'compass');
@@ -23,6 +24,32 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
   const [travelStyles, setTravelStyles] = useState<string[]>(
     userProfile.travelStyles?.length ? userProfile.travelStyles : ['Cultural & Heritage', 'Food & Dining']
   );
+
+  const initialStyles = userProfile.travelStyles?.length ? userProfile.travelStyles : ['Cultural & Heritage', 'Food & Dining'];
+  const isDirty =
+    displayName !== (userProfile.displayName || 'Traveler') ||
+    avatar !== (userProfile.avatar || 'compass') ||
+    homeCountry !== (userProfile.homeCountry || 'India') ||
+    preferredCurrency !== (userProfile.preferredCurrency || 'INR') ||
+    travelStyles.length !== initialStyles.length ||
+    travelStyles.some((s) => !initialStyles.includes(s));
+
+  const handleRequestClose = async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm({
+        title: 'Discard Profile Edits?',
+        categoryKicker: 'GUARD SHEET',
+        description: 'You have unsaved edits to your traveler profile. Discard changes?',
+        warningMessage: 'Changes will not be saved.',
+        confirmText: 'Discard Changes',
+        cancelText: 'Keep Editing',
+        variant: 'destructive',
+        iconName: 'edit',
+      });
+      if (!confirmed) return;
+    }
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -47,22 +74,26 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99990,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px',
-      }}
-    >
+    <ModalPortal isOpen={isOpen}>
       <div
-        className="travelnest-card"
+        onClick={handleRequestClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 99990,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'max(16px, env(safe-area-inset-top, 16px)) max(16px, env(safe-area-inset-right, 16px)) max(16px, env(safe-area-inset-bottom, 16px)) max(16px, env(safe-area-inset-left, 16px))',
+          colorScheme: 'light',
+        }}
+      >
+        <div
+          className="travelnest-card"
+          onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '460px',
@@ -96,9 +127,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
             </h3>
           </div>
           <button
-            onClick={onClose}
+            type="button"
+            onClick={handleRequestClose}
             className="btn btn-ghost"
             style={{ padding: '6px', borderRadius: '9999px', color: 'var(--secondary)' }}
+            aria-label="Close modal"
           >
             <X size={18} strokeWidth={2} />
           </button>
@@ -260,7 +293,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
           <div style={{ paddingTop: '8px', display: 'flex', gap: '10px' }}>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleRequestClose}
               className="btn btn-secondary"
               style={{ flex: 1, minHeight: '42px', borderRadius: '9999px' }}
             >
@@ -277,5 +310,6 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onCl
         </form>
       </div>
     </div>
+    </ModalPortal>
   );
 };

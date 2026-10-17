@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { db } from '../../db/database';
+import { useApp } from '../../context/AppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { BaseIngredientPrice, TripIngredientPriceOverride } from '../../types';
 import { normalizeIngredientName } from '../../utils/recipeUtils';
 import { X, Plus, Trash2, Search, DollarSign } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface IngredientPriceModalProps {
   tripId?: string;
@@ -16,6 +18,7 @@ export const IngredientPriceModal: React.FC<IngredientPriceModalProps> = ({
   defaultCurrency = 'INR',
   onClose,
 }) => {
+  const { showConfirm, showToast } = useApp();
   const [activeTab, setActiveTab] = useState<'base' | 'trip'>(tripId ? 'trip' : 'base');
   const [search, setSearch] = useState('');
 
@@ -66,12 +69,44 @@ export const IngredientPriceModal: React.FC<IngredientPriceModalProps> = ({
     setName('');
   };
 
-  const handleDeleteBasePrice = async (id: string) => {
-    await db.baseIngredientPrices.delete(id);
+  const handleDeleteBasePrice = async (id: string, itemName?: string) => {
+    const confirmed = await showConfirm({
+      title: itemName ? `Delete Base Price for "${itemName}"?` : 'Delete Ingredient Price?',
+      categoryKicker: 'GROCERY CATALOG',
+      description: 'Remove this standard price entry from your global catalog? Reusable recipes will fall back to unpriced estimates.',
+      confirmText: 'Delete Price',
+      cancelText: 'Keep Price',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.baseIngredientPrices.delete(id);
+        showToast('Base price removed.', 'info');
+      } catch (err: any) {
+        showToast('Failed to delete price: ' + err.message, 'error');
+      }
+    }
   };
 
-  const handleDeleteOverride = async (id: string) => {
-    await db.tripIngredientOverrides.delete(id);
+  const handleDeleteOverride = async (id: string, itemName?: string) => {
+    const confirmed = await showConfirm({
+      title: itemName ? `Delete Trip Price for "${itemName}"?` : 'Delete Price Override?',
+      categoryKicker: 'PRICE OVERRIDE',
+      description: 'Remove this destination price override? Trip calculations will fall back to your global base price catalog.',
+      confirmText: 'Delete Override',
+      cancelText: 'Keep Override',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.tripIngredientOverrides.delete(id);
+        showToast('Trip price override removed.', 'info');
+      } catch (err: any) {
+        showToast('Failed to delete override: ' + err.message, 'error');
+      }
+    }
   };
 
   const filteredBase = (basePrices || []).filter((b) =>
@@ -83,35 +118,20 @@ export const IngredientPriceModal: React.FC<IngredientPriceModalProps> = ({
   );
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: '20px',
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-        }}
+        className="modal-overlay"
+        onClick={onClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '540px',
+            backgroundColor: '#FFFFFF',
+            padding: '20px',
+          }}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div>
             <span className="label-micro">GROCERY & INGREDIENT PRICING</span>
@@ -274,9 +294,10 @@ export const IngredientPriceModal: React.FC<IngredientPriceModalProps> = ({
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleDeleteOverride(ovr.id)}
+                      onClick={() => handleDeleteOverride(ovr.id, ovr.ingredientName)}
                       className="btn-icon"
                       style={{ width: '24px', height: '24px', color: '#dc2626' }}
+                      title="Delete price override"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -310,9 +331,10 @@ export const IngredientPriceModal: React.FC<IngredientPriceModalProps> = ({
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleDeleteBasePrice(base.id)}
+                      onClick={() => handleDeleteBasePrice(base.id, base.name)}
                       className="btn-icon"
                       style={{ width: '24px', height: '24px', color: '#dc2626' }}
+                      title="Delete base price"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -324,5 +346,6 @@ export const IngredientPriceModal: React.FC<IngredientPriceModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

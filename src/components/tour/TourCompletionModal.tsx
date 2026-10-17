@@ -1,5 +1,6 @@
 import React from 'react';
 import { Check, Compass, ArrowRight } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface TourCompletionModalProps {
   onFinish: () => void;
@@ -7,22 +8,24 @@ interface TourCompletionModalProps {
 
 export const TourCompletionModal: React.FC<TourCompletionModalProps> = ({ onFinish }) => {
   return (
-    <div
-      className="dialog-backdrop"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(11, 12, 14, 0.70)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        zIndex: 99990,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        animation: 'fadeIn 180ms ease-out',
-      }}
-    >
+    <ModalPortal>
+      <div
+        className="dialog-backdrop"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(11, 12, 14, 0.70)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          zIndex: 99990,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          colorScheme: 'light',
+          animation: 'fadeIn 180ms ease-out',
+        }}
+      >
       <div
         className="dialog-frame"
         role="dialog"
@@ -126,5 +129,6 @@ export const TourCompletionModal: React.FC<TourCompletionModalProps> = ({ onFini
         </button>
       </div>
     </div>
+    </ModalPortal>
   );
 };

@@ -20,6 +20,7 @@ import {
   RefreshCw,
   FolderSync,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface RecordExchangeModalProps {
   currentTripId?: string;
@@ -32,7 +33,7 @@ export const RecordExchangeModal: React.FC<RecordExchangeModalProps> = ({
   onClose,
   onImportComplete,
 }) => {
-  const { showToast } = useApp();
+  const { showToast, showConfirm } = useApp();
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
 
   // Export states
@@ -115,6 +116,21 @@ export const RecordExchangeModal: React.FC<RecordExchangeModalProps> = ({
 
   const handleExecuteImport = async () => {
     if (!candidatePack) return;
+
+    if (conflictStrategy === 'overwrite') {
+      const confirmed = await showConfirm({
+        title: 'Overwrite Conflicting Records?',
+        categoryKicker: 'DATA IMPORT',
+        description: 'Records in this pack with matching IDs will overwrite your existing data. Unmatched records will be created normally.',
+        warningMessage: 'Existing record modifications may be replaced.',
+        confirmText: 'Overwrite Records',
+        cancelText: 'Cancel',
+        variant: 'destructive',
+        iconName: 'alert',
+      });
+      if (!confirmed) return;
+    }
+
     setIsImporting(true);
     try {
       const result = await importRecordPackWithStrategy(candidatePack, conflictStrategy);
@@ -128,20 +144,27 @@ export const RecordExchangeModal: React.FC<RecordExchangeModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal>
       <div
-        className="travelnest-card animate-slide-up"
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          zIndex: 99990,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 0,
+          colorScheme: 'light',
+        }}
+      >
+        <div
+          className="travelnest-card animate-slide-up"
+          onClick={(e) => e.stopPropagation()}
         style={{
           width: '100%',
           maxWidth: '560px',
@@ -476,5 +499,6 @@ export const RecordExchangeModal: React.FC<RecordExchangeModalProps> = ({
         )}
       </div>
     </div>
+    </ModalPortal>
   );
 };

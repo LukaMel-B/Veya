@@ -81,6 +81,9 @@ async function runTests() {
   assert(dialogFrameContent.includes('dialog-callout-warning'), 'DialogFrame supports warning callout slot');
   assert(dialogFrameContent.includes('dialog-callout-info'), 'DialogFrame supports detail card slot');
   assert(dialogFrameContent.includes('Escape'), 'DialogFrame handles keyboard Escape key dismissal');
+  assert(dialogFrameContent.includes('createPortal'), 'DialogFrame uses createPortal to escape parent scroll containers');
+  assert(dialogFrameContent.includes('useVisualViewport'), 'DialogFrame supports visualViewport dynamic keyboard and chrome adaptation');
+  assert(dialogFrameContent.includes('acquireScrollLock'), 'DialogFrame locks background body scroll when opened');
 
   const confirmDialogPath = path.resolve(srcDir, 'components/common/ConfirmDialog.tsx');
   assert(fs.existsSync(confirmDialogPath), 'ConfirmDialog.tsx exists in components/common/');
@@ -133,7 +136,10 @@ async function runTests() {
   assert(indexCssContent.includes('border-radius: 24px'), 'CSS uses 24px (rounded-3xl) radius on dialog frame');
   assert(indexCssContent.includes('.dialog-icon-pill'), 'CSS defines .dialog-icon-pill (40px)');
   assert(indexCssContent.includes('.btn-dialog-destructive'), 'CSS defines .btn-dialog-destructive (#DC2626)');
-  assert(indexCssContent.includes('[data-theme="dark"] .dialog-frame'), 'CSS provides dark theme overrides for dialog-frame');
+  assert(!indexCssContent.includes('[data-theme="dark"] .dialog-frame'), 'CSS does NOT have dark theme overrides for dialog-frame (Veya light theme invariant)');
+  assert(indexCssContent.includes('color-scheme: light'), 'CSS strictly enforces color-scheme: light on dialogs and overlays');
+  assert(indexCssContent.includes('position: fixed'), 'CSS specifies position: fixed on dialog-backdrop and modal-overlay');
+  assert(!indexCssContent.includes('transform: translateZ(0)'), 'CSS removes transform translateZ from scroll-views to prevent clipping fixed dialogs');
 
   // TEST 6: Views Destructive Actions Migration
   console.log('\n[Section 6: Destructive Action Handlers in Views]');
@@ -181,15 +187,18 @@ async function runTests() {
   assert(journalEntryModalContent.includes('isDirty'), 'JournalEntryModal tracks isDirty input state');
   assert(journalEntryModalContent.includes('Discard Unsaved Journal'), 'JournalEntryModal prompts before discarding unsaved entries');
 
-  // TEST 8: Interactive Modal Trigger Sandbox
-  console.log('\n[Section 8: Interactive Modal Trigger Sandbox]');
+  // TEST 8: Sandbox Removal and Clean Settings Invariant
+  console.log('\n[Section 8: Unwanted Modal Sandbox Clean Removal]');
   const settingsViewContent = fs.readFileSync(path.resolve(srcDir, 'components/settings/SettingsView.tsx'), 'utf8');
-  assert(settingsViewContent.includes('Interactive Modal Trigger Sandbox'), 'SettingsView includes Interactive Modal Trigger Sandbox');
-  assert(settingsViewContent.includes('handleSandboxStandardConfirm'), 'SettingsView implements Standard Confirm trigger');
-  assert(settingsViewContent.includes('handleSandboxDestructive'), 'SettingsView implements Destructive Delete trigger');
-  assert(settingsViewContent.includes('handleSandboxForm'), 'SettingsView implements Create / Edit Form trigger');
-  assert(settingsViewContent.includes('handleSandboxConflict'), 'SettingsView implements Schedule Conflict trigger');
-  assert(settingsViewContent.includes('handleSandboxProgress'), 'SettingsView implements Progress State trigger');
+  assert(!settingsViewContent.includes('Interactive Modal Trigger Sandbox'), 'SettingsView does NOT include unwanted Sandbox');
+  assert(!settingsViewContent.includes('handleSandboxStandardConfirm'), 'SettingsView does NOT have handleSandboxStandardConfirm');
+  assert(!settingsViewContent.includes('handleSandboxDestructive'), 'SettingsView does NOT have handleSandboxDestructive');
+  assert(!settingsViewContent.includes('handleSandboxForm'), 'SettingsView does NOT have handleSandboxForm');
+  assert(!settingsViewContent.includes('handleSandboxConflict'), 'SettingsView does NOT have handleSandboxConflict');
+  assert(!settingsViewContent.includes('handleSandboxProgress'), 'SettingsView does NOT have handleSandboxProgress');
+  assert(settingsViewContent.includes('RemoveSampleDataModal'), 'SettingsView preserves RemoveSampleDataModal');
+  assert(settingsViewContent.includes('AppResetModal'), 'SettingsView preserves AppResetModal');
+  assert(settingsViewContent.includes('EditProfileModal'), 'SettingsView preserves EditProfileModal');
 
   console.log(`\n==================================================`);
   console.log(`DIALOG COMPONENT LIBRARY TEST RESULTS: ${passed} passed, ${failed} failed`);

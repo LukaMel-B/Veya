@@ -24,7 +24,7 @@ import { getCountryFlag, getCountryCover } from '../../utils/countryUtils';
 import { formatDateRangeDDmmmYY } from '../../utils/dateUtils';
 
 export const TripsView: React.FC = () => {
-  const { setActiveTripId, showToast, showConfirm, searchQuery, setSearchQuery } = useApp();
+  const { activeTripId, setActiveTripId, showToast, showConfirm, searchQuery, setSearchQuery } = useApp();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -176,6 +176,9 @@ export const TripsView: React.FC = () => {
     if (confirmed) {
       try {
         await db.deleteTripCascade(trip.id);
+        if (activeTripId === trip.id) {
+          setActiveTripId(null);
+        }
         showToast(`Trip "${trip.name}" deleted. Saved items & memories were preserved.`, 'info');
       } catch (err: any) {
         showToast('Error deleting trip: ' + err.message, 'error');

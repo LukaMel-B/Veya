@@ -1,5 +1,6 @@
 import React from 'react';
 import { Compass, Sparkles, ArrowRight, X } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface TourWelcomeModalProps {
   onStartTour: () => void;
@@ -11,22 +12,24 @@ export const TourWelcomeModal: React.FC<TourWelcomeModalProps> = ({
   onSkipTour,
 }) => {
   return (
-    <div
-      className="dialog-backdrop"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(11, 12, 14, 0.70)',
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
-        zIndex: 99990,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        animation: 'fadeIn 180ms ease-out',
-      }}
-    >
+    <ModalPortal>
+      <div
+        className="dialog-backdrop"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          backgroundColor: 'rgba(11, 12, 14, 0.70)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          zIndex: 99990,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          colorScheme: 'light',
+          animation: 'fadeIn 180ms ease-out',
+        }}
+      >
       <div
         className="dialog-frame"
         role="dialog"
@@ -194,5 +197,6 @@ export const TourWelcomeModal: React.FC<TourWelcomeModalProps> = ({
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 };

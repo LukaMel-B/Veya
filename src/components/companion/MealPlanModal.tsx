@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { db } from '../../db/database';
+import { useApp } from '../../context/AppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { TripMealPlan, MealType, Recipe } from '../../types';
 import { calculateRecipeCost } from '../../utils/recipeUtils';
-import { X, Utensils, Coffee, Sun, Moon, Plus } from 'lucide-react';
+import { X, Utensils, Coffee, Sun, Moon, Plus, Trash2 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface MealPlanModalProps {
   tripId: string;
@@ -22,11 +24,59 @@ export const MealPlanModal: React.FC<MealPlanModalProps> = ({
   onClose,
   onOpenRecipeLibrary,
 }) => {
+  const { showConfirm, showToast } = useApp();
   const [mealType, setMealType] = useState<MealType>(initialPlan?.mealType || 'dinner');
   const [recipeId, setRecipeId] = useState<string>(initialPlan?.recipeId || '');
   const [customMealName, setCustomMealName] = useState(initialPlan?.customMealName || '');
   const [servings, setServings] = useState(initialPlan?.servings || 2);
   const [notes, setNotes] = useState(initialPlan?.notes || '');
+
+  const isDirty = initialPlan
+    ? mealType !== (initialPlan.mealType || 'dinner') ||
+      recipeId !== (initialPlan.recipeId || '') ||
+      customMealName !== (initialPlan.customMealName || '') ||
+      servings !== (initialPlan.servings || 2) ||
+      notes !== (initialPlan.notes || '')
+    : Boolean(recipeId || customMealName.trim() || notes.trim());
+
+  const handleRequestClose = async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm({
+        title: initialPlan?.id ? 'Discard Meal Edits?' : 'Discard New Meal Plan?',
+        categoryKicker: 'GUARD SHEET',
+        description: 'You have unsaved changes to this meal plan. Are you sure you want to discard them?',
+        warningMessage: 'Changes will not be saved to your itinerary.',
+        confirmText: 'Discard Changes',
+        cancelText: 'Keep Editing',
+        variant: 'destructive',
+        iconName: 'edit',
+      });
+      if (!confirmed) return;
+    }
+    onClose();
+  };
+
+  const handleDeletePlan = async () => {
+    if (!initialPlan?.id) return;
+    const confirmed = await showConfirm({
+      title: 'Remove Planned Meal?',
+      categoryKicker: 'MEAL SCHEDULE',
+      description: `Remove this meal (${mealType}) from the trip schedule? Reusable recipes will remain intact.`,
+      confirmText: 'Remove Meal',
+      cancelText: 'Keep Meal',
+      variant: 'destructive',
+      iconName: 'trash',
+    });
+    if (confirmed) {
+      try {
+        await db.tripMealPlans.delete(initialPlan.id);
+        showToast('Planned meal removed.', 'info');
+        onClose();
+      } catch (err: any) {
+        showToast('Failed to remove meal plan: ' + err.message, 'error');
+      }
+    }
+  };
 
   const recipes = useLiveQuery(() => db.recipes.toArray(), []);
   const basePrices = useLiveQuery(() => db.baseIngredientPrices.toArray(), []);
@@ -73,35 +123,20 @@ export const MealPlanModal: React.FC<MealPlanModalProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: '20px',
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-        }}
+        className="modal-overlay"
+        onClick={handleRequestClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '520px',
+            backgroundColor: '#FFFFFF',
+            padding: '20px',
+          }}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div>
             <span className="label-micro">DAY {dayNumber} · MEAL PLANNING</span>
@@ -109,7 +144,13 @@ export const MealPlanModal: React.FC<MealPlanModalProps> = ({
               {initialPlan?.id ? 'Edit Planned Meal' : 'Plan Daily Meal'}
             </h3>
           </div>
-          <button onClick={onClose} className="btn-icon" style={{ width: '32px', height: '32px' }} aria-label="Close modal">
+          <button
+            type="button"
+            onClick={handleRequestClose}
+            className="btn-icon"
+            style={{ width: '32px', height: '32px' }}
+            aria-label="Close modal"
+          >
             <X size={18} />
           </button>
         </div>
@@ -274,7 +315,18 @@ export const MealPlanModal: React.FC<MealPlanModalProps> = ({
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
-            <button type="button" onClick={onClose} className="btn btn-secondary" style={{ flex: 1 }}>
+            {initialPlan?.id && (
+              <button
+                type="button"
+                onClick={handleDeletePlan}
+                className="btn btn-secondary"
+                style={{ color: '#dc2626', borderColor: '#fee2e2', padding: '0 14px' }}
+                title="Remove Planned Meal"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+            <button type="button" onClick={handleRequestClose} className="btn btn-secondary" style={{ flex: 1 }}>
               Cancel
             </button>
             <button
@@ -289,5 +341,6 @@ export const MealPlanModal: React.FC<MealPlanModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

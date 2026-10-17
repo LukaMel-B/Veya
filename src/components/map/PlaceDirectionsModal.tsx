@@ -21,6 +21,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import L from 'leaflet';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface PlaceDirectionsModalProps {
   place: Place;
@@ -151,36 +152,20 @@ export const PlaceDirectionsModal: React.FC<PlaceDirectionsModalProps> = ({
   const geoUri = hasCoords ? buildGeoUri(place.lat!, place.lng!, place.name) : '';
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '540px',
-          maxHeight: '92vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: 0,
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-          overflow: 'hidden',
-        }}
+        className="modal-overlay"
+        onClick={onClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '540px',
+            backgroundColor: '#FFFFFF',
+            padding: 0,
+          }}
+        >
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -340,5 +325,6 @@ export const PlaceDirectionsModal: React.FC<PlaceDirectionsModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

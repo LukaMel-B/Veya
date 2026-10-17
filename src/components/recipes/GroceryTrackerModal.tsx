@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { db } from '../../db/database';
+import { useApp } from '../../context/AppContext';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { TripGroceryItem, Expense } from '../../types';
 import { aggregateGroceryListFromMealPlans } from '../../utils/recipeUtils';
 import { X, Check, ShoppingCart, DollarSign, Plus } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface GroceryTrackerModalProps {
   tripId: string;
@@ -18,6 +20,7 @@ export const GroceryTrackerModal: React.FC<GroceryTrackerModalProps> = ({
   onClose,
   onExpenseLogged,
 }) => {
+  const { showConfirm, showToast } = useApp();
   const mealPlans = useLiveQuery(() => db.tripMealPlans.where('tripId').equals(tripId).toArray(), [tripId]);
   const recipes = useLiveQuery(() => db.recipes.toArray(), []);
   const basePrices = useLiveQuery(() => db.baseIngredientPrices.toArray(), []);
@@ -69,6 +72,17 @@ export const GroceryTrackerModal: React.FC<GroceryTrackerModalProps> = ({
   const handleLogAsExpense = async () => {
     if (totalBought <= 0) return;
 
+    const confirmed = await showConfirm({
+      title: 'Log Groceries to Trip Budget?',
+      categoryKicker: 'BUDGET EXPENSE',
+      description: `Log ${defaultCurrency} ${Math.round(totalBought)} as a new grocery expense in your trip budget?`,
+      confirmText: 'Log Expense',
+      cancelText: 'Cancel',
+      variant: 'default',
+      iconName: 'check',
+    });
+    if (!confirmed) return;
+
     const boughtItemNames = computedList
       .filter((i) => i.bought)
       .map((i) => `${i.name} (${i.totalQuantity} ${i.unit})`)
@@ -90,41 +104,31 @@ export const GroceryTrackerModal: React.FC<GroceryTrackerModalProps> = ({
       createdAt: new Date().toISOString(),
     };
 
-    await db.expenses.add(newExpense);
-    if (onExpenseLogged) onExpenseLogged();
-    onClose();
+    try {
+      await db.expenses.add(newExpense);
+      showToast('Grocery expense logged to trip budget.', 'success');
+      if (onExpenseLogged) onExpenseLogged();
+      onClose();
+    } catch (err: any) {
+      showToast('Failed to log expense: ' + err.message, 'error');
+    }
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        backdropFilter: 'blur(4px)',
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-    >
+    <ModalPortal isOpen={true}>
       <div
-        className="travelnest-card animate-slide-up"
-        style={{
-          width: '100%',
-          maxWidth: '560px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          padding: '20px',
-          margin: 0,
-          boxShadow: '0 -10px 40px rgba(0,0,0,0.2)',
-        }}
+        className="modal-overlay"
+        onClick={onClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '560px',
+            backgroundColor: '#FFFFFF',
+            padding: '20px',
+          }}
+        >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <div>
             <span className="label-micro">MEAL PLANNER & COOKING</span>
@@ -297,5 +301,6 @@ export const GroceryTrackerModal: React.FC<GroceryTrackerModalProps> = ({
         </div>
       </div>
     </div>
+  </ModalPortal>
   );
 };

@@ -315,7 +315,6 @@ button,
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   background-color: #ffffff;
-  transform: translateZ(0);
 }
 
 /* ==========================================================================
@@ -904,26 +903,47 @@ button,
    Modal Sheets & Dialogs (Safe Area Responsive)
    ========================================================================== */
 
-.modal-overlay {
-  position: absolute;
+.modal-overlay,
+.modal-backdrop {
+  position: fixed;
   inset: 0;
+  width: 100vw;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
   padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: 0;
   background-color: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 60;
+  z-index: 99990;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  color-scheme: light !important;
+  overscroll-behavior: contain;
+}
+
+.veya-modal-portal-root {
+  position: relative;
+  z-index: 99990;
+  color-scheme: light !important;
 }
 
 .modal-sheet {
-  background-color: #ffffff;
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  color-scheme: light !important;
   width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
   border-top-left-radius: 24px;
   border-top-right-radius: 24px;
-  max-height: 90%;
+  max-height: calc(100dvh - env(safe-area-inset-top, 20px) - 16px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   box-shadow: var(--shadow-float);
   border-top: 1px solid var(--stroke);
   display: flex;
@@ -999,22 +1019,35 @@ button,
 .dialog-backdrop {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: -webkit-fill-available;
   background-color: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  z-index: 1200;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: max(16px, env(safe-area-inset-top, 16px)) max(16px, env(safe-area-inset-right, 16px)) max(16px, env(safe-area-inset-bottom, 16px)) max(16px, env(safe-area-inset-left, 16px));
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  color-scheme: light !important;
   animation: dialogBackdropIn 150ms ease-out;
 }
 
 .dialog-frame {
-  background-color: #ffffff;
-  color: #111111;
+  background-color: #ffffff !important;
+  color: #111111 !important;
+  color-scheme: light !important;
   width: 100%;
   max-width: 380px;
+  max-height: calc(100dvh - env(safe-area-inset-top, 16px) - env(safe-area-inset-bottom, 16px) - 32px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   border-radius: 24px;
   border: 1px solid var(--stroke);
   box-shadow: 0 20px 30px -5px rgba(0, 0, 0, 0.15), 0 10px 15px -5px rgba(0, 0, 0, 0.08);
@@ -1026,12 +1059,13 @@ button,
   animation: dialogScaleIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-[data-theme="dark"] .dialog-frame,
-.dark .dialog-frame {
-  background-color: #1c1c1e;
-  color: #f5f5f7;
-  border-color: #2c2c2e;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+.dialog-frame input,
+.dialog-frame textarea,
+.dialog-frame select,
+.modal-sheet input,
+.modal-sheet textarea,
+.modal-sheet select {
+  color-scheme: light !important;
 }
 
 .dialog-icon-pill {
@@ -1049,45 +1083,21 @@ button,
   background-color: #f3f4f3;
   color: #111111;
 }
-[data-theme="dark"] .dialog-icon-pill.variant-neutral,
-[data-theme="dark"] .dialog-icon-pill.variant-default,
-.dark .dialog-icon-pill.variant-neutral,
-.dark .dialog-icon-pill.variant-default {
-  background-color: #2c2c2e;
-  color: #f5f5f7;
-}
 
 .dialog-icon-pill.variant-destructive,
 .dialog-icon-pill.variant-danger {
   background-color: #fef2f2;
   color: #dc2626;
 }
-[data-theme="dark"] .dialog-icon-pill.variant-destructive,
-[data-theme="dark"] .dialog-icon-pill.variant-danger,
-.dark .dialog-icon-pill.variant-destructive,
-.dark .dialog-icon-pill.variant-danger {
-  background-color: rgba(69, 10, 10, 0.4);
-  color: #f87171;
-}
 
 .dialog-icon-pill.variant-warning {
   background-color: #fffbeb;
   color: #d97706;
 }
-[data-theme="dark"] .dialog-icon-pill.variant-warning,
-.dark .dialog-icon-pill.variant-warning {
-  background-color: rgba(69, 26, 3, 0.4);
-  color: #fbbf24;
-}
 
 .dialog-icon-pill.variant-success {
   background-color: #ecfdf5;
   color: #059669;
-}
-[data-theme="dark"] .dialog-icon-pill.variant-success,
-.dark .dialog-icon-pill.variant-success {
-  background-color: rgba(6, 78, 59, 0.4);
-  color: #34d399;
 }
 
 .dialog-kicker {
@@ -1104,7 +1114,7 @@ button,
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.35;
-  color: inherit;
+  color: #111111 !important;
   margin: 0;
   letter-spacing: -0.015em;
 }
@@ -1114,10 +1124,6 @@ button,
   line-height: 1.5;
   color: #6e6e73;
   margin: 6px 0 0;
-}
-[data-theme="dark"] .dialog-body,
-.dark .dialog-body {
-  color: #8e8e93;
 }
 
 .dialog-callout-warning {
@@ -1134,12 +1140,6 @@ button,
   gap: 8px;
   line-height: 1.45;
 }
-[data-theme="dark"] .dialog-callout-warning,
-.dark .dialog-callout-warning {
-  background-color: rgba(120, 53, 15, 0.2);
-  border-color: rgba(217, 119, 6, 0.3);
-  color: #fcd34d;
-}
 
 .dialog-callout-info {
   background-color: #f7f7f6;
@@ -1150,12 +1150,6 @@ button,
   color: #444748;
   margin-top: 12px;
   line-height: 1.45;
-}
-[data-theme="dark"] .dialog-callout-info,
-.dark .dialog-callout-info {
-  background-color: #18181a;
-  border-color: #2c2c2e;
-  color: #a1a1a6;
 }
 
 .dialog-actions {
@@ -1179,6 +1173,7 @@ button,
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 150ms ease;
   flex: 1;
 }
@@ -1187,15 +1182,6 @@ button,
 }
 .btn-dialog-primary:active {
   transform: scale(0.98);
-}
-[data-theme="dark"] .btn-dialog-primary,
-.dark .btn-dialog-primary {
-  background-color: #ffffff;
-  color: #111111;
-}
-[data-theme="dark"] .btn-dialog-primary:hover,
-.dark .btn-dialog-primary:hover {
-  background-color: #f5f5f7;
 }
 
 .btn-dialog-secondary {
@@ -1211,6 +1197,7 @@ button,
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 150ms ease;
   flex: 1;
 }
@@ -1220,16 +1207,6 @@ button,
 }
 .btn-dialog-secondary:active {
   transform: scale(0.98);
-}
-[data-theme="dark"] .btn-dialog-secondary,
-.dark .btn-dialog-secondary {
-  background-color: transparent;
-  color: #d1d5db;
-  border-color: #3a3a3c;
-}
-[data-theme="dark"] .btn-dialog-secondary:hover,
-.dark .btn-dialog-secondary:hover {
-  background-color: #2c2c2e;
 }
 
 .btn-dialog-destructive {
@@ -1245,6 +1222,7 @@ button,
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 150ms ease;
   flex: 1;
 }

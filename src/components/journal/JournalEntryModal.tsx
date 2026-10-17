@@ -16,6 +16,7 @@ import {
   Compass,
   Tag,
 } from 'lucide-react';
+import { ModalPortal } from '../common/ModalPortal';
 
 interface JournalEntryModalProps {
   isOpen: boolean;
@@ -280,37 +281,19 @@ export const JournalEntryModal: React.FC<JournalEntryModalProps> = ({
   };
 
   return (
-    <div
-      className="modal-backdrop"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
-      onClick={handleRequestClose}
-    >
+    <ModalPortal isOpen={isOpen}>
       <div
-        className="modal-sheet"
-        style={{
-          width: '100%',
-          maxWidth: '520px',
-          maxHeight: '90vh',
-          backgroundColor: '#FFFFFF',
-          borderTopLeftRadius: '24px',
-          borderTopRightRadius: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          boxShadow: '0 -10px 40px rgba(0, 0, 0, 0.25)',
-        }}
-        onClick={(e) => e.stopPropagation()}
+        className="modal-overlay"
+        onClick={handleRequestClose}
       >
+        <div
+          className="modal-sheet"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: '520px',
+            backgroundColor: '#FFFFFF',
+          }}
+        >
         {/* Header */}
         <div
           style={{
@@ -853,5 +836,6 @@ export const JournalEntryModal: React.FC<JournalEntryModalProps> = ({
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };

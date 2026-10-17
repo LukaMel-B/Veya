@@ -16,6 +16,7 @@ import {
   FolderPlus,
   X,
 } from 'lucide-react';
+import { ModalPortal } from './ModalPortal';
 
 export const QuickAddModal: React.FC = () => {
   const {
@@ -23,6 +24,7 @@ export const QuickAddModal: React.FC = () => {
     setIsQuickAddOpen,
     quickAddPreselectedTripId,
     showToast,
+    showConfirm,
   } = useApp();
 
   const [activeType, setActiveType] = useState<CollectionItemType | 'expense'>('place');
@@ -289,9 +291,39 @@ export const QuickAddModal: React.FC = () => {
     }
   };
 
+  const isDirty = Boolean(
+    title.trim() ||
+    url.trim() ||
+    address.trim() ||
+    notes.trim() ||
+    tags.trim() ||
+    amount.trim() ||
+    newCountryInput.trim() ||
+    newCategoryInput.trim() ||
+    newExpenseCatInput.trim()
+  );
+
+  const handleRequestClose = async () => {
+    if (isDirty) {
+      const confirmed = await showConfirm({
+        title: 'Discard Unsaved Entry?',
+        categoryKicker: 'GUARD SHEET',
+        description: 'You have entered details that have not been saved. Are you sure you want to discard them?',
+        warningMessage: 'Unsaved inputs will be lost.',
+        confirmText: 'Discard Changes',
+        cancelText: 'Keep Editing',
+        variant: 'destructive',
+        iconName: 'edit',
+      });
+      if (!confirmed) return;
+    }
+    setIsQuickAddOpen(false);
+  };
+
   return (
-    <div className="modal-overlay" onClick={() => setIsQuickAddOpen(false)}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh' }}>
+    <ModalPortal isOpen={isQuickAddOpen}>
+      <div className="modal-overlay" onClick={handleRequestClose}>
+        <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-drag-handle" />
 
         {/* Modal Navigation Header */}
@@ -306,7 +338,7 @@ export const QuickAddModal: React.FC = () => {
         >
           <button
             type="button"
-            onClick={() => setIsQuickAddOpen(false)}
+            onClick={handleRequestClose}
             className="btn-ghost btn-sm"
           >
             Cancel
@@ -831,5 +863,6 @@ export const QuickAddModal: React.FC = () => {
         </form>
       </div>
     </div>
+  </ModalPortal>
   );
 };
