@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
+import { db } from '../../db/database';
 import {
   inspectDummyDataForRemoval,
   removeDummyData,
@@ -32,7 +33,7 @@ export const RemoveSampleDataModal: React.FC<RemoveSampleDataModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { showToast } = useApp();
+  const { showToast, activeTripId, setActiveTripId } = useApp();
   const [loading, setLoading] = useState(false);
   const [inspecting, setInspecting] = useState(true);
   const [preview, setPreview] = useState<DummyRemovalPreview | null>(null);
@@ -60,6 +61,12 @@ export const RemoveSampleDataModal: React.FC<RemoveSampleDataModalProps> = ({
     setLoading(true);
     try {
       const result = await removeDummyData();
+      if (activeTripId) {
+        const stillExists = await db.trips.get(activeTripId);
+        if (!stillExists) {
+          setActiveTripId(null);
+        }
+      }
       showToast(
         `Successfully removed ${result.removedTotal} dummy records. Your personal data is intact.`,
         'success'

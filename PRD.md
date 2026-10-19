@@ -1468,7 +1468,51 @@ Database schema version 7 introduces 6 new IndexedDB stores:
 * [x] **Automated Test Suite (100% Pass Rate):**
   * Extended `findsAndCountryDeletion.test.ts` to test ISO dataset coverage (248 countries/territories), search and alias resolution, duplicate prevention in `db.saveCountry()`, folder editing, and UI component invariants.
   * Verified all 9 test suites pass cleanly (51 tests in finds/country deletion, 93 in destructive actions, 450+ total assertions).
-  * Production bundle compiled with zero errors (`npm run build`).
-  * Synchronized native iOS assets (`npm run cap:sync`).
+### Release 2.8.1 Checklist (Complete Dummy Data Removal & Provenance Engine Overhaul Across All Database Stores)
+* [x] **Root Cause Resolution for Switzerland Finds Survival:**
+  * **Title Baseline Synchronization:** Identified that `BASELINE_SAMPLE_COLLECTIONS` in `src/db/provenance.ts` held legacy titles (`'Restaurant Taverne Traditional Swiss Fondue'`, `'Victoria-Jungfrau Grand Hotel & Spa'`, `'Jungfraujoch – Top of Europe High Alpine Sphinx'`), whereas `src/db/seedData.ts` seeded them with updated titles (`'Fondue Chalet Ferdinand with Matterhorn Panorama'`, `'The Chedi Andermatt Alpine Haven'`, `'Grindelwald First Cliff Walk & Tissot Bridge'`).
+  * `isCollectionItemEdited()` compared active titles against outdated single baseline strings, falsely flagging pristine sample Switzerland items as user-edited. This caused the cleanup engine to preserve them and detach them to the Switzerland inbox.
+  * Updated `BASELINE_SAMPLE_COLLECTIONS` with `titles: string[]` support to seamlessly recognize both active and legacy sample titles as unedited baseline records.
+  * **Complete Collection ID Registry:** Updated `SAMPLE_COLLECTION_IDS` to include all 15 active sample item IDs (`col-1`, `col-jp-food-2`, `col-jp-place-1`, `col-jp-act-1`, `col-jp-stay-1`, `col-jp-shop-1`, `col-2`, `col-3`, `col-ch-food-1`, `col-ch-stay-1`, `col-ch-place-1`, `col-inbox-1`, `col-inbox-2`, `col-kz-1`, `col-inbox-3`) while retaining legacy IDs in `LEGACY_SAMPLE_COLLECTION_IDS`.
+* [x] **Universal Store Coverage (All 17 Database Tables):**
+  * Extended `inspectDummyDataForRemoval()` and `removeDummyData()` to audit and clean all 17 IndexedDB stores:
+    * `trips` (Tokyo, Swiss Alps, Kazakhstan)
+    * `places` (6 Tokyo/Swiss/Kazakhstan places)
+    * `collectionItems` (all 15 sample finds, both trip-linked and independent inbox items)
+    * `itineraryEvents` (all sample activities)
+    * `bookings` (sample flights, hotels, trains)
+    * `expenses` (sample budget ledger entries)
+    * `essentials` (sample packing checklists)
+    * `documents` (sample travel vault documents)
+    * `journalEntries` (sample trip and standalone memories)
+    * `transportLegs` (sample flight, monorail, subway, shinkansen transit segments)
+    * `recipes` (sample Campfire Shakshuka, Alpine Garlic Pasta, Tokyo Golden Curry)
+    * `baseIngredientPrices` (14 sample base grocery catalog prices)
+    * `tripMealPlans` (trip-linked sample meal schedules)
+    * `tripGroceryItems` (trip-linked sample grocery lists)
+    * `tripIngredientOverrides` (trip-linked sample ingredient price overrides)
+    * `countries` (sample dossiers: Switzerland, Japan, Kazakhstan)
+    * `categories` (default system category taxonomy strictly protected)
+* [x] **Country Dossier Pruning vs Protection Invariants:**
+  * Sample country dossiers (`switzerland`, `japan`, `kazakhstan`) are cleanly deleted when all associated dummy trips and dummy collection items are removed.
+  * **Protection Rules:** A country dossier is strictly *preserved* if:
+    1. The user has at least one genuine personal collection item in that country.
+    2. The user has a personal trip located in or traveling to that country.
+    3. The country matches the user's `dreamCountry` or `homeCountry` in their user profile (`travelnest_user_profile`).
+    4. The country dossier has been customized with user edits (`isEdited: true`).
+* [x] **Independent Finds Removal Without Trip Linkage:**
+  * Cleaned up independent sample finds (`col-inbox-1`: Reykjavik Sky Lagoon, `col-inbox-2`: Lisbon Pastéis de Belém, `col-inbox-3`: Minimalist Alpine Packing) that have `tripId: undefined` and `status: 'inbox'`. Removal does not rely on trip relationships.
+* [x] **Non-Destructive User Data Preservation & Foreign Key Detachment:**
+  * User-created records with identical names or countries to sample data are *never* flagged as dummy data (identified via explicit `isSample: true` provenance tags and deterministic ID sets).
+  * Any user-created or user-edited collection items or journals linked to a deleted dummy trip are safely detached (trip foreign key cleared, status set to inbox, destination preserved) rather than deleted.
+  * If the active trip in app state (`activeTripId`) is deleted during cleanup, it is safely cleared to prevent stale view errors.
+* [x] **Idempotency & Double-Run Safety:**
+  * Verified that running "Remove Dummy Data" multiple times is completely safe: subsequent runs find 0 removable items, complete cleanly without errors, and leave all personal user data untouched.
+* [x] **Automated Verification (100% Pass Rate):**
+  * Extended `src/tests/dummyRemovalAndTripDelete.test.ts` with 4 dedicated test suites (Suites 7, 8, 9, 10) covering all 15 collection items, legacy title recognition, country pruning vs dream country protection, full 17-store purge, and idempotency.
+  * All 9 test suites pass cleanly (118 assertions in dummy removal suite, 480+ total assertions).
+  * `npm run lint` (`oxlint`): 0 errors.
+  * `npm run build` (`tsc -b && vite build`): 0 TypeScript errors, bundle generated successfully.
+
 
 

@@ -28,6 +28,8 @@ export interface CountryDossier {
   flag?: string;
   coverImage?: string;
   notes?: string;
+  isSample?: boolean;
+  isEdited?: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -358,6 +360,8 @@ export interface BaseIngredientPrice {
   price: number; // Unit price
   currency: string;
   country?: string; // e.g. "General", "Switzerland"
+  isSample?: boolean;
+  isEdited?: boolean;
   updatedAt: string;
 }
 

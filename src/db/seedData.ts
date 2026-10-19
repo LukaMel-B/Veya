@@ -1034,9 +1034,9 @@ export async function seedSampleData(mode: 'replace' | 'merge' = 'replace') {
 
       // Re-populate country dossiers for sample trips
       const sampleCountries = [
-        { id: 'japan', name: 'Japan', coverImage: getCountryCover('Japan'), createdAt: new Date().toISOString() },
-        { id: 'switzerland', name: 'Switzerland', coverImage: getCountryCover('Switzerland'), createdAt: new Date().toISOString() },
-        { id: 'kazakhstan', name: 'Kazakhstan', coverImage: getCountryCover('Kazakhstan'), createdAt: new Date().toISOString() },
+        { id: 'japan', name: 'Japan', isSample: true, coverImage: getCountryCover('Japan'), createdAt: new Date().toISOString() },
+        { id: 'switzerland', name: 'Switzerland', isSample: true, coverImage: getCountryCover('Switzerland'), createdAt: new Date().toISOString() },
+        { id: 'kazakhstan', name: 'Kazakhstan', isSample: true, coverImage: getCountryCover('Kazakhstan'), createdAt: new Date().toISOString() },
       ];
       await db.countries.bulkPut(sampleCountries);
 
@@ -1182,6 +1182,7 @@ export async function seedSampleData(mode: 'replace' | 'merge' = 'replace') {
           await db.countries.put({
             id: cId,
             name: countryName,
+            isSample: true,
             coverImage: getCountryCover(countryName),
             createdAt: new Date().toISOString(),
           });
@@ -1299,20 +1300,20 @@ export function getSampleRecipes(): Recipe[] {
 
 export function getSampleBaseIngredientPrices(): BaseIngredientPrice[] {
   return [
-    { id: 'eggs', name: 'Eggs', unit: 'pcs', unitQuantity: 6, price: 90, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'canned-tomatoes', name: 'Canned Tomatoes', unit: 'g', unitQuantity: 400, price: 110, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'bell-pepper', name: 'Bell Pepper', unit: 'pcs', unitQuantity: 1, price: 40, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'onion', name: 'Onion', unit: 'pcs', unitQuantity: 1, price: 15, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'garlic', name: 'Garlic', unit: 'pcs', unitQuantity: 1, price: 10, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'olive-oil', name: 'Olive Oil', unit: 'ml', unitQuantity: 500, price: 550, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'feta-cheese', name: 'Feta Cheese', unit: 'g', unitQuantity: 200, price: 280, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'pasta', name: 'Pasta', unit: 'g', unitQuantity: 500, price: 120, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'butter', name: 'Butter', unit: 'g', unitQuantity: 100, price: 60, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'parmesan-cheese', name: 'Parmesan Cheese', unit: 'g', unitQuantity: 100, price: 320, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'rice', name: 'Rice', unit: 'g', unitQuantity: 1000, price: 110, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'potatoes', name: 'Potatoes', unit: 'pcs', unitQuantity: 1, price: 15, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'carrots', name: 'Carrots', unit: 'pcs', unitQuantity: 1, price: 20, currency: 'INR', updatedAt: new Date().toISOString() },
-    { id: 'japanese-curry-roux', name: 'Japanese Curry Roux', unit: 'g', unitQuantity: 100, price: 240, currency: 'INR', updatedAt: new Date().toISOString() },
+    { id: 'eggs', name: 'Eggs', unit: 'pcs', unitQuantity: 6, price: 90, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'canned-tomatoes', name: 'Canned Tomatoes', unit: 'g', unitQuantity: 400, price: 110, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'bell-pepper', name: 'Bell Pepper', unit: 'pcs', unitQuantity: 1, price: 40, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'onion', name: 'Onion', unit: 'pcs', unitQuantity: 1, price: 15, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'garlic', name: 'Garlic', unit: 'pcs', unitQuantity: 1, price: 10, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'olive-oil', name: 'Olive Oil', unit: 'ml', unitQuantity: 500, price: 550, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'feta-cheese', name: 'Feta Cheese', unit: 'g', unitQuantity: 200, price: 280, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'pasta', name: 'Pasta', unit: 'g', unitQuantity: 500, price: 120, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'butter', name: 'Butter', unit: 'g', unitQuantity: 100, price: 60, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'parmesan-cheese', name: 'Parmesan Cheese', unit: 'g', unitQuantity: 100, price: 320, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'rice', name: 'Rice', unit: 'g', unitQuantity: 1000, price: 110, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'potatoes', name: 'Potatoes', unit: 'pcs', unitQuantity: 1, price: 15, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'carrots', name: 'Carrots', unit: 'pcs', unitQuantity: 1, price: 20, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
+    { id: 'japanese-curry-roux', name: 'Japanese Curry Roux', unit: 'g', unitQuantity: 100, price: 240, currency: 'INR', isSample: true, updatedAt: new Date().toISOString() },
   ];
 }
 
